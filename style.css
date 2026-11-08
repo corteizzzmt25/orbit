@@ -1,4 +1,4 @@
-:root{--navy:#081230;--navy2:#0f1d44;--navy3:#16295c;--gold:#c9a24b;--gold2:#e6c775;--ink:#eef2fc;--mut:#9eaacb;--line:rgba(255,255,255,.12);--bad:#ff8a8a;--ok:#7fe0a6}
+:root{--navy:#f5faff;--navy2:#eaf4ff;--navy3:#d6e9ff;--gold:#0a57b8;--gold2:#2f8cf0;--ink:#0b2a5b;--mut:#4e6590;--line:rgba(10,87,184,.16);--bad:#c62828;--ok:#1b8a4b}
 *{box-sizing:border-box;margin:0}
 html{scroll-behavior:smooth}
 body{font:16px/1.6 Outfit,Cairo,system-ui,sans-serif;background:var(--navy);color:var(--ink);min-height:100vh}
@@ -85,3 +85,21 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .back{display:none}
 @media(max-width:1000px){.app{grid-template-columns:200px 1fr}.det{position:fixed;inset:64px 0 0;z-index:20;display:none}body.open .det{display:block}.back{display:inline-block;margin-bottom:14px}}
 @media(max-width:640px){.app{grid-template-columns:1fr;grid-template-rows:64px auto 1fr}.side{display:flex;overflow:auto;border:0;border-bottom:1px solid var(--line);padding:6px}.side button{white-space:nowrap;width:auto}}
+
+/* ===== logo teması ===== */
+.top{background:rgba(255,255,255,.93)}
+.logo{color:#0a57b8}.logo small{color:#0a57b8}
+.logo em{display:block;font-style:normal;font-size:.5em;letter-spacing:.3em;font-weight:700;color:#0a57b8}
+[dir=rtl] .logo em{letter-spacing:0;font-size:.62em}
+.hero{background:linear-gradient(180deg,#4db8ff 0,#a9dbff 42%,#fff 100%)}
+.hero svg.bg{opacity:.55}
+.hero p.lead{color:var(--ink);opacity:.85}
+.rule{background:linear-gradient(90deg,#0a57b8,#4db8ff)}
+.card{box-shadow:0 24px 60px rgba(10,87,184,.25);border-top-color:#0a57b8}
+.btn{background:linear-gradient(135deg,#0a57b8,#2f8cf0);color:#fff;box-shadow:0 8px 22px rgba(10,87,184,.35)}
+.lang button[aria-pressed=true]{color:#fff}
+.side button[aria-current=true]{color:var(--ink);font-weight:600}
+.msg b{color:var(--ink)}
+.msg.new{animation:flash2 2.4s}@keyframes flash2{0%,40%{background:#fff4c2}}
+.login{background:linear-gradient(180deg,#4db8ff,#fff)}
+.toast{color:#fff}
