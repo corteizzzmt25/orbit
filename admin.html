@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ORBIT — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="common.js"></script>
+</head>
+<body>
+<div class="login" id="login">
+  <form class="card" id="lf">
+    <div class="logo" data-logo></div>
+    <h2 data-i="login_t"></h2><p class="s"> </p>
+    <div class="f">
+      <label><span data-i="email"></span><input id="em" type="email" autocomplete="username" required></label>
+      <label><span data-i="password"></span><input id="pw" type="password" autocomplete="current-password" required></label>
+      <div id="ln" class="note err" role="alert"></div>
+      <button class="btn" type="submit" data-i="login"></button>
+      <div class="lang" style="justify-self:center;border-color:#c9a24b;color:#0b1632"><button data-lang="en">English</button><button data-lang="ar">العربية</button></div>
+    </div>
+  </form>
+</div>
+
+<div class="app" id="app">
+  <div class="bar">
+    <a class="logo" data-logo style="font-size:1rem"></a>
+    <span class="sp"></span>
+    <button class="ib hot" id="en"></button>
+    <button class="ib" id="mu"></button>
+    <div class="lang"><button data-lang="en">English</button><button data-lang="ar">العربية</button></div>
+    <button class="ib" id="lo" data-i="logout"></button>
+  </div>
+  <nav class="side" id="side"></nav>
+  <section class="list" id="list"></section>
+  <section class="det" id="det"></section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const sb = configured() ? supabase.createClient(CFG.url, CFG.key) : null;
+let rows = [], filter = 'inbox', sel = null, chan = null, newIds = new Set();
+const known = new Set();              // ids already seen => a sound never repeats for the same message
+let muted = localStorage.getItem('orbit_mute') === '1', ctx = null, alertsOn = false;
+
+const FILTERS = { inbox: r => !r.is_archived, unread: r => !r.is_archived && !r.is_read, read: r => !r.is_archived && r.is_read, archived: r => r.is_archived };
+const unreadCount = () => rows.filter(FILTERS.unread).length;
+const fmt = (d, o) => new Intl.DateTimeFormat(loc(), o).format(new Date(d));
+const stamp = d => fmt(d, { dateStyle: 'medium', timeStyle: 'short' });
+const day = d => fmt(d + 'T00:00:00', { dateStyle: 'medium' });
+
+/* ---------- sound / notifications ---------- */
+function unlockAudio() {
+  try { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); } catch {}
+  if (ctx && ctx.state === 'running') alertsOn = true;
+  drawBar();
+}
+document.addEventListener('pointerdown', unlockAudio, { once: false });
+document.addEventListener('keydown', unlockAudio);
+function beep() {
+  if (muted || !ctx) return;
+  if (ctx.state === 'suspended') ctx.resume();
+  [[880, 0], [1320, .18]].forEach(([f, d]) => {
+    const o = ctx.createOscillator(), g = ctx.createGain(), s = ctx.currentTime + d;
+    o.type = 'sine'; o.frequency.value = f; o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0, s); g.gain.linearRampToValueAtTime(.35, s + .02); g.gain.exponentialRampToValueAtTime(.001, s + .45);
+    o.start(s); o.stop(s + .5);
+  });
+}
+function drawBar() {
+  const perm = 'Notification' in window ? Notification.permission : 'denied';
+  $('en').textContent = (alertsOn && perm === 'granted') ? '✓ ' + t('enabled') : t('enable');
+  $('en').classList.toggle('hot', !(alertsOn && perm === 'granted'));
+  $('mu').textContent = (muted ? '🔇 ' : '🔊 ') + t(muted ? 'unmute' : 'mute');
+}
+$('en').onclick = async () => { unlockAudio(); if ('Notification' in window && Notification.permission === 'default') await Notification.requestPermission(); beep(); drawBar(); };
+$('mu').onclick = () => { muted = !muted; localStorage.setItem('orbit_mute', muted ? '1' : '0'); drawBar(); };
+
+function notify(r) {
+  beep();
+  const msg = `${r.full_name} — ${r.departure_city} → ${r.destination_city}`;
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const n = new Notification(t('new_req'), { body: msg, tag: r.id }); n.onclick = () => { window.focus(); pick(r.id); n.close(); };
+  }
+  const el = document.createElement('div'); el.className = 'toast'; el.textContent = '✈ ' + msg;
+  el.onclick = () => { pick(r.id); el.remove(); }; document.body.append(el); setTimeout(() => el.remove(), 7000);
+}
+
+/* ---------- data ---------- */
+async function load() {
+  const { data, error } = await sb.from('flight_requests').select('*').order('created_at', { ascending: false });
+  if (error) return;
+  rows = data; data.forEach(r => known.add(r.id));   // initial load: no sound
+  render();
+  if (!chan) chan = sb.channel('orbit-requests').on('postgres_changes', { event: '*', schema: 'public', table: 'flight_requests' }, p => {
+    if (p.eventType === 'INSERT') {
+      if (known.has(p.new.id)) return;
+      known.add(p.new.id); newIds.add(p.new.id); rows.unshift(p.new); notify(p.new);
+    } else if (p.eventType === 'UPDATE') rows = rows.map(r => r.id === p.new.id ? p.new : r);
+    else if (p.eventType === 'DELETE') { rows = rows.filter(r => r.id !== p.old.id); if (sel === p.old.id) sel = null; }
+    render();
+  }).subscribe(s => { if (s === 'SUBSCRIBED' && rows.length) sync(); });
+}
+async function sync() {   // after a reconnect, pick up anything missed; sound only for ids never seen before
+  const { data } = await sb.from('flight_requests').select('*').order('created_at', { ascending: false });
+  if (!data) return;
+  data.filter(r => !known.has(r.id)).reverse().forEach(r => { known.add(r.id); newIds.add(r.id); notify(r); });
+  rows = data; render();
+}
+const patch = (id, v) => sb.from('flight_requests').update(v).eq('id', id).then(({ error }) => { if (!error) { rows = rows.map(r => r.id === id ? { ...r, ...v } : r); render(); } });
+
+/* ---------- render ---------- */
+function pick(id) { sel = id; newIds.delete(id); const r = rows.find(x => x.id === id); if (r && !r.is_read) patch(id, { is_read: true }); document.body.classList.add('open'); render(); }
+function render() {
+  const u = unreadCount();
+  document.title = (u ? `(${u}) ` : '') + 'ORBIT — Admin';
+  $('side').innerHTML = [['inbox', 'inbox'], ['unread', 'unread'], ['read', 'read'], ['archived', 'archived']].map(([k, l]) => {
+    const c = k === 'unread' ? u : '';
+    return `<button data-f="${k}" aria-current="${filter === k}"><span>${t(l)}</span>${c ? `<span class="cnt" aria-label="${c}">${c}</span>` : ''}</button>`;
+  }).join('');
+  const list = rows.filter(FILTERS[filter]);
+  $('list').innerHTML = list.length ? list.map(r => `
+    <button class="msg ${r.is_read ? '' : 'u'} ${newIds.has(r.id) ? 'new' : ''}" data-id="${r.id}" aria-current="${sel === r.id}">
+      <span class="l1"><b>${esc(r.full_name)}</b><small>${esc(stamp(r.created_at))}</small></span>
+      <span style="display:block" dir="ltr">${esc(r.phone_number)}</span>
+      <span style="display:block">${esc(r.departure_city)} → ${esc(r.destination_city)}</span>
+      <small>${esc(day(r.departure_date))}</small>
+    </button>`).join('') : `<div class="empty">${t('empty')}</div>`;
+  const r = rows.find(x => x.id === sel);
+  $('det').innerHTML = !r ? `<div class="empty">${t('pick')}</div>` : `
+    <button class="ib back" data-a="back">← ${t('back')}</button>
+    <h2>${esc(r.full_name)}</h2><p class="meta">${t('received')}: ${esc(stamp(r.created_at))}</p>
+    <div class="grid">
+      <div><small>${t('phone')}</small><b dir="ltr"><a href="tel:${esc(r.phone_number)}" style="color:var(--gold2)">${esc(r.phone_number)}</a></b></div>
+      <div><small>${t('from')}</small><b>${esc(r.departure_city)}</b></div>
+      <div><small>${t('to')}</small><b>${esc(r.destination_city)}</b></div>
+      <div><small>${t('date')}</small><b>${esc(day(r.departure_date))}</b></div>
+      <div><small>${t('time')}</small><b dir="ltr">${esc(r.departure_time)}</b></div>
+    </div>
+    <div class="bubble">${r.additional_message ? esc(r.additional_message) : '—'}</div>
+    <div class="acts">
+      <a class="btn" href="tel:${esc(r.phone_number)}">📞 ${t('call')}</a>
+      <button class="ib" data-a="read">${t(r.is_read ? 'mark_unread' : 'mark_read')}</button>
+      <button class="ib" data-a="arch">${t(r.is_archived ? 'unarchive' : 'archive')}</button>
+      <button class="ib d" data-a="del">${t('del')}</button>
+    </div>`;
+  drawBar();
+}
+document.addEventListener('click', async e => {
+  const f = e.target.closest('[data-f]'); if (f) { filter = f.dataset.f; render(); return; }
+  const m = e.target.closest('[data-id]'); if (m) return pick(m.dataset.id);
+  const a = e.target.closest('[data-a]'); if (!a) return;
+  const r = rows.find(x => x.id === sel);
+  if (a.dataset.a === 'back') { document.body.classList.remove('open'); return; }
+  if (!r) return;
+  if (a.dataset.a === 'read') patch(r.id, { is_read: !r.is_read });
+  if (a.dataset.a === 'arch') { await patch(r.id, { is_archived: !r.is_archived }); sel = null; document.body.classList.remove('open'); render(); }
+  if (a.dataset.a === 'del' && confirm(t('confirm_del'))) {
+    const { error } = await sb.from('flight_requests').delete().eq('id', r.id);
+    if (!error) { rows = rows.filter(x => x.id !== r.id); sel = null; document.body.classList.remove('open'); render(); }
+  }
+});
+document.addEventListener('langchange', () => { if ($('app').classList.contains('on')) render(); });
+
+/* ---------- auth ---------- */
+async function enter(session) {
+  const { data } = await sb.from('admins').select('user_id').eq('user_id', session.user.id).maybeSingle();
+  if (!data) { await sb.auth.signOut(); $('ln').textContent = t('e_auth'); $('ln').classList.add('show'); return false; }
+  $('login').style.display = 'none'; $('app').classList.add('on');
+  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().then(drawBar);
+  await load(); return true;
+}
+$('lf').addEventListener('submit', async e => {
+  e.preventDefault(); $('ln').classList.remove('show');
+  if (!sb) { $('ln').textContent = t('setup'); return $('ln').classList.add('show'); }
+  const { data, error } = await sb.auth.signInWithPassword({ email: $('em').value.trim(), password: $('pw').value });
+  if (error) { $('ln').textContent = t('e_login'); return $('ln').classList.add('show'); }
+  enter(data.session);
+});
+$('lo').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+if (sb) sb.auth.getSession().then(({ data }) => data.session && enter(data.session));
+</script>
+</body>
+</html>
