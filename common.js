@@ -1,5 +1,5 @@
 // ===== EDIT THESE (anon key is public by design; protected by RLS. NEVER put the service_role key here) =====
-const CFG = { url: 'https://YOUR-PROJECT.supabase.co', key: 'YOUR-ANON-KEY', phone: '+966 50 000 0000', email: 'info@orbit-travel.com' };
+const CFG = { url: 'https://gvjuucnibuxvrgobiawi.supabase.co', key: 'sb_publishable_SQe7d1X-_X4-S6eHyvdHVg_jIUTnCkk', phone: '+963 934 239 105', email: 'info@orbit-travel.com' };
 
 const T = {
 en: {
