@@ -1,5 +1,5 @@
 // Format: IATA|City|Airport|Arabic city (optional). Customers can still type any other airport freely.
-const AIRPORTS = `
+const AP_DATA = `
 DAM|Damascus|Damascus International|دمشق
 ALP|Aleppo|Aleppo International|حلب
 LTK|Latakia|Bassel Al-Assad International|اللاذقية
@@ -147,5 +147,6 @@ ACC|Accra|Kotoka International
 DKR|Dakar|Blaise Diagne
 `.trim().split('\n').map(l => {
   const [code, city, name, ar] = l.split('|');
-  return `${city}${ar ? ' ' + ar : ''} – ${name} (${code})`;
+  return { code, city, name, ar, v: `${city}${ar ? ' ' + ar : ''} – ${name} (${code})` };
 });
+const AIRPORTS = AP_DATA.map(x => x.v);

@@ -7,9 +7,35 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" href="logo.jpg"><link rel="stylesheet" href="style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="common.js"></script>
 <script src="airports.js"></script>
+<style>
+.lbl{font-size:.88rem;font-weight:500;color:#26335a}
+.fld{display:grid;gap:5px;position:relative}.fld[hidden]{display:none}
+.row.one{grid-template-columns:1fr}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#f3f5fb;border-radius:12px;padding:4px;margin-top:5px}
+.seg label{display:block;position:relative;gap:0}
+.seg input{position:absolute;opacity:0;inset:0;width:100%;height:100%;cursor:pointer}
+.seg span{display:block;text-align:center;padding:9px 6px;border-radius:9px;font-weight:600;color:#26335a;transition:.2s}
+.seg input:checked+span{background:#0a57b8;color:#fff;box-shadow:0 4px 12px rgba(10,87,184,.3)}
+.seg input:focus-visible+span{outline:2px solid #2f8cf0;outline-offset:2px}
+.step{display:flex;align-items:center;justify-content:space-between;background:#f3f5fb;border:1.5px solid #d5dbec;border-radius:10px;padding:5px 8px}
+.step b{font-size:1.1rem;min-width:2ch;text-align:center}
+.step button{width:34px;height:34px;border-radius:50%;border:0;background:#0a57b8;color:#fff;font-size:1.2rem;line-height:1;cursor:pointer;transition:.2s}
+.step button:disabled{background:#c5d3ea;cursor:not-allowed}
+.dp{position:relative}.dp input{cursor:pointer}
+.cal{position:absolute;z-index:40;top:calc(100% + 6px);inset-inline-start:0;width:292px;max-width:calc(100vw - 48px);background:#fff;border:1px solid #d5dbec;border-radius:14px;box-shadow:0 18px 50px rgba(10,87,184,.28);padding:12px;animation:rise .2s both}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.nv{width:32px;height:32px;border-radius:50%;border:0;background:#eaf4ff;color:#0a57b8;font-size:1.3rem;line-height:1;cursor:pointer}
+.nv:disabled{opacity:.35;cursor:not-allowed}[dir=rtl] .nv{transform:scaleX(-1)}
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.cg i{font-style:normal;font-size:.72rem;color:#5a6f94;padding:4px 0}
+.cg button{border:0;background:none;border-radius:8px;padding:8px 0;cursor:pointer;color:#0b2a5b;font-size:.92rem}
+.cg button:hover:not(:disabled){background:#eaf4ff}
+.cg button.sel{background:#0a57b8;color:#fff;font-weight:700}
+.cg button:disabled{color:#b9c4da;cursor:not-allowed}
+.hint{font-size:.82rem;color:#55627f;text-align:center}
+</style>
 </head>
 <body>
 <header class="top"><div class="wrap">
@@ -33,17 +59,20 @@
     <div class="card">
       <h2 data-i="form_t"></h2><p class="s" data-i="form_s"></p>
       <form id="f" class="f" novalidate>
-        <label><span data-i="name"></span><input id="n" autocomplete="name" maxlength="120" required></label>
-        <label><span data-i="phone"></span><div class="phone"><select id="cc" aria-label="Country code"></select><input id="p" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="15" required></div></label>
+        <div><div class="lbl" data-i="trip"></div>
+          <div class="seg" role="radiogroup"><label><input type="radio" name="tt" value="one" checked><span data-i="one"></span></label><label><input type="radio" name="tt" value="round"><span data-i="round"></span></label></div></div>
         <div class="row">
           <label><span data-i="from"></span><input id="a" list="ap" maxlength="120" autocomplete="off" required></label>
           <label><span data-i="to"></span><input id="b" list="ap" maxlength="120" autocomplete="off" required></label>
         </div>
-        <label><span data-i="date"></span><div class="d3"><select id="dd" required></select><select id="mm" required></select><select id="yy" required></select></div></label>
-        <label><span data-i="time"></span><input id="tm" type="time" required></label>
-        <label><span data-i="msg"></span><textarea id="m" rows="3" maxlength="2000"></textarea></label>
+        <div class="row one" id="dates">
+          <div class="fld"><span class="lbl" data-i="date"></span><div class="dp"><input id="dep" readonly data-ph="pick" aria-haspopup="dialog"></div></div>
+          <div class="fld" id="retW" hidden><span class="lbl" data-i="ret"></span><div class="dp"><input id="ret" readonly data-ph="pick" aria-haspopup="dialog"></div></div>
+        </div>
+        <div class="fld"><span class="lbl" data-i="pax"></span><div class="step"><button type="button" id="mi" aria-label="−">−</button><b id="px" aria-live="polite">1</b><button type="button" id="pl" aria-label="+">+</button></div></div>
         <div id="note" class="note" role="status" aria-live="polite"></div>
         <button class="btn" id="go" type="submit" data-i="submit"></button>
+        <p class="hint" data-i="wa_hint"></p>
       </form>
     </div>
   </div>
@@ -54,54 +83,100 @@
 
 <script>
 const $ = id => document.getElementById(id);
-const sb = configured() ? supabase.createClient(CFG.url, CFG.key, { auth: { persistSession: false } }) : null;
-const CODES = [['🇸🇦','+966'],['🇦🇪','+971'],['🇰🇼','+965'],['🇶🇦','+974'],['🇧🇭','+973'],['🇴🇲','+968'],['🇯🇴','+962'],['🇪🇬','+20'],['🇮🇶','+964'],['🇱🇧','+961'],['🇸🇾','+963'],['🇾🇪','+967'],['🇵🇸','+970'],['🇲🇦','+212'],['🇩🇿','+213'],['🇹🇳','+216'],['🇸🇩','+249'],['🇹🇷','+90'],['🇵🇰','+92'],['🇮🇳','+91'],['🇵🇭','+63'],['🇬🇧','+44'],['🇺🇸','+1'],['🇩🇪','+49'],['🇫🇷','+33'],['🇳🇱','+31']];
-$('cc').innerHTML = CODES.map(([f, c]) => `<option value="${c}">${f} ${c}</option>`).join('');
+const WA = '963953536602';   // +963 953 536 602 (wa.me için + ve boşluk yok)
+Object.assign(T.en, {
+  form_s:'Enter your trip details and send them to us on WhatsApp.', trip:'Trip type', one:'One way', round:'Round trip', pax:'Passengers', ret:'Return date', pick:'Select date',
+  e_same:'Departure and destination cannot be the same.', e_ret:'Return date cannot be earlier than the departure date.',
+  wa_open:'Opening WhatsApp… just press Send.', wa_hint:'You will continue in WhatsApp — just press Send.',
+  wa_hello:'Hello ORBIT TRAVEL & TOURISM,', wa_req:'I would like to request a flight.', wa_trip:'Trip Type', wa_pax:'Passengers', wa_dep:'Departure', wa_dest:'Destination', wa_ddate:'Departure Date', wa_rdate:'Return Date', wa_thanks:'Thank you!'
+});
+Object.assign(T.ar, {
+  form_s:'أدخل تفاصيل رحلتك وأرسلها لنا عبر واتساب.', trip:'نوع الرحلة', one:'ذهاب فقط', round:'ذهاب وعودة', pax:'عدد المسافرين', ret:'تاريخ العودة', pick:'اختر التاريخ',
+  e_same:'لا يمكن أن تكون المغادرة والوجهة نفسها.', e_ret:'لا يمكن أن يكون تاريخ العودة قبل تاريخ المغادرة.',
+  wa_open:'جارٍ فتح واتساب… يكفي الضغط على إرسال.', wa_hint:'ستكمل في واتساب — يكفي الضغط على إرسال.',
+  wa_hello:'مرحبًا ORBIT TRAVEL & TOURISM،', wa_req:'أرغب في طلب رحلة طيران.', wa_trip:'نوع الرحلة', wa_pax:'عدد المسافرين', wa_dep:'المغادرة', wa_dest:'الوجهة', wa_ddate:'تاريخ المغادرة', wa_rdate:'تاريخ العودة', wa_thanks:'شكرًا لكم!'
+});
+
 $('ap').innerHTML = AIRPORTS.map(v => `<option value="${v}">`).join('');
 $('y').textContent = new Date().getFullYear();
 $('tel').href = 'tel:' + CFG.phone.replace(/\s/g, ''); $('tel').textContent = CFG.phone;
 $('mail').href = 'mailto:' + CFG.email; $('mail').textContent = CFG.email;
 
-function fillDate() {
-  const keep = [$('dd').value, $('mm').value, $('yy').value], Y = new Date().getFullYear();
-  const opt = (v, l) => `<option value="${v}">${l}</option>`;
-  $('dd').innerHTML = opt('', t('day')) + Array.from({ length: 31 }, (_, i) => opt(i + 1, i + 1)).join('');
-  $('mm').innerHTML = opt('', t('month')) + Array.from({ length: 12 }, (_, i) => opt(i + 1, new Intl.DateTimeFormat(loc(), { month: 'long' }).format(new Date(2000, i, 1)))).join('');
-  $('yy').innerHTML = opt('', t('year')) + [Y, Y + 1, Y + 2].map(y => opt(y, y)).join('');
-  [$('dd').value, $('mm').value, $('yy').value] = keep;
+const pad = n => String(n).padStart(2, '0');
+const L = () => loc() + (lang === 'ar' ? '-nu-latn' : '');
+const today = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; };
+const short = d => `${pad(d.getDate())} ${new Intl.DateTimeFormat(L(), { month: 'short' }).format(d)} ${d.getFullYear()}`;       // 15 Nov 2026
+const long = d => `${d.getDate()} ${new Intl.DateTimeFormat(L(), { month: 'long' }).format(d)} ${d.getFullYear()}`;              // 15 November 2026
+const D = { dep: null, ret: null };
+let pax = 1, openW = null;
+const round = () => document.querySelector('input[name=tt]:checked').value === 'round';
+
+/* ---- takvim ---- */
+const closeCal = () => { if (openW) { const c = openW.querySelector('.cal'); if (c) c.remove(); openW = null; } };
+document.addEventListener('click', e => { if (openW && !openW.contains(e.target)) closeCal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCal(); });
+function picker(key, minFn, onPick) {
+  const inp = $(key), wrap = inp.closest('.dp'); let view;
+  const draw = () => {
+    let c = wrap.querySelector('.cal');
+    if (!c) { c = document.createElement('div'); c.className = 'cal'; c.setAttribute('role', 'dialog'); wrap.append(c); c.addEventListener('click', e => {
+      e.stopPropagation(); const b = e.target.closest('button'); if (!b || b.disabled) return;
+      if (b.dataset.n) { view = new Date(view.getFullYear(), view.getMonth() + +b.dataset.n, 1); draw(); return; }
+      D[key] = new Date(view.getFullYear(), view.getMonth(), +b.dataset.d); inp.value = short(D[key]); inp.classList.remove('bad');
+      closeCal(); if (onPick) onPick();
+    }); }
+    const min = minFn(), y = view.getFullYear(), m = view.getMonth(), n = new Date(y, m + 1, 0).getDate(), off = new Date(y, m, 1).getDay();
+    const wd = Array.from({ length: 7 }, (_, i) => `<i>${new Intl.DateTimeFormat(L(), { weekday: 'short' }).format(new Date(2023, 0, 1 + i))}</i>`).join('');
+    let days = '<span></span>'.repeat(off);
+    for (let d = 1; d <= n; d++) { const x = new Date(y, m, d); days += `<button type="button" data-d="${d}" ${x < min ? 'disabled' : ''} class="${D[key] && +D[key] === +x ? 'sel' : ''}">${d}</button>`; }
+    c.innerHTML = `<div class="ch"><button type="button" class="nv" data-n="-1" ${new Date(y, m, 0) < min ? 'disabled' : ''}>‹</button><b>${new Intl.DateTimeFormat(L(), { month: 'long', year: 'numeric' }).format(view)}</b><button type="button" class="nv" data-n="1">›</button></div><div class="cg">${wd}${days}</div>`;
+  };
+  const toggle = () => { const was = openW === wrap; closeCal(); if (was) return; const b = D[key] || minFn(); view = new Date(b.getFullYear(), b.getMonth(), 1); openW = wrap; draw(); };
+  inp.addEventListener('click', toggle);
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
 }
-document.addEventListener('langchange', fillDate);
+picker('dep', today, () => { if (D.ret && D.ret < D.dep) { D.ret = null; $('ret').value = ''; } });
+picker('ret', () => D.dep || today());
+
+/* ---- gidiş-dönüş / yolcu ---- */
+document.querySelectorAll('input[name=tt]').forEach(r => r.addEventListener('change', () => {
+  $('retW').hidden = !round(); $('dates').classList.toggle('one', !round());
+  if (!round()) { D.ret = null; $('ret').value = ''; $('ret').classList.remove('bad'); } closeCal();
+}));
+const showPax = () => { $('px').textContent = pax; $('mi').disabled = pax <= 1; $('pl').disabled = pax >= 9; };
+$('mi').onclick = () => { pax = Math.max(1, pax - 1); showPax(); };
+$('pl').onclick = () => { pax = Math.min(9, pax + 1); showPax(); };
+showPax();
 
 const note = (c, k) => { const n = $('note'); n.className = 'note show ' + c; n.textContent = t(k); n.dataset.k = k; };
-document.addEventListener('langchange', () => { const n = $('note'); if (n.dataset.k && n.classList.contains('show')) n.textContent = t(n.dataset.k); });
-let busy = false;
+document.addEventListener('langchange', () => {
+  $('dep').value = D.dep ? short(D.dep) : ''; $('ret').value = D.ret ? short(D.ret) : ''; closeCal();
+  const n = $('note'); if (n.dataset.k && n.classList.contains('show')) n.textContent = t(n.dataset.k);
+});
 
-$('f').addEventListener('submit', async e => {
+/* ---- şehir / havalimanı çözümleme: "Damascus (DAM)" ---- */
+function place(raw) {
+  const r = raw.trim(), x = AP_DATA.find(p => p.v === r) || AP_DATA.find(p => p.code.toLowerCase() === r.toLowerCase());
+  return x ? `${lang === 'ar' && x.ar ? x.ar : x.city} (${x.code})` : r;
+}
+
+$('f').addEventListener('submit', e => {
   e.preventDefault();
-  if (busy) return;
   document.querySelectorAll('.bad').forEach(x => x.classList.remove('bad'));
-  const v = { n: $('n').value.trim(), p: $('p').value.replace(/\D/g, '').replace(/^0+/, ''), a: $('a').value.trim(), b: $('b').value.trim(), tm: $('tm').value };
-  const bad = [];
-  if (v.n.length < 2) bad.push('n'); if (v.p.length < 6 || v.p.length > 14) bad.push('p');
-  if (v.a.length < 2) bad.push('a'); if (v.b.length < 2) bad.push('b'); if (!v.tm) bad.push('tm');
-  bad.forEach(id => $(id).classList.add('bad'));
-  if (bad.length || !$('dd').value || !$('mm').value || !$('yy').value) { ['dd', 'mm', 'yy'].forEach(id => !$(id).value && $(id).classList.add('bad')); return note('err', 'e_req'); }
-  const [D, M, Y] = [+$('dd').value, +$('mm').value, +$('yy').value], dt = new Date(Y, M - 1, D), today = new Date(); today.setHours(0, 0, 0, 0);
-  if (dt.getMonth() !== M - 1 || dt < today) { ['dd', 'mm', 'yy'].forEach(id => $(id).classList.add('bad')); return note('err', 'e_date'); }
-  if (!sb) return note('err', 'e_net');
+  const a = $('a').value.trim(), b = $('b').value.trim(), bad = [];
+  if (a.length < 2) bad.push('a'); if (b.length < 2) bad.push('b'); if (!D.dep) bad.push('dep'); if (round() && !D.ret) bad.push('ret');
+  if (bad.length) { bad.forEach(i => $(i).classList.add('bad')); return note('err', 'e_req'); }
+  if (place(a).toLowerCase() === place(b).toLowerCase()) { $('a').classList.add('bad'); $('b').classList.add('bad'); return note('err', 'e_same'); }
+  if (D.dep < today()) { $('dep').classList.add('bad'); return note('err', 'e_date'); }
+  if (round() && D.ret < D.dep) { $('ret').classList.add('bad'); return note('err', 'e_ret'); }
 
-  const row = { id: crypto.randomUUID(), full_name: v.n, phone_number: $('cc').value + v.p, departure_city: v.a, destination_city: v.b,
-    departure_date: `${Y}-${String(M).padStart(2, '0')}-${String(D).padStart(2, '0')}`, departure_time: v.tm, additional_message: $('m').value.trim() || null };
-  const sig = JSON.stringify([row.full_name, row.phone_number, row.departure_city, row.destination_city, row.departure_date, row.departure_time]);
-  const last = JSON.parse(sessionStorage.getItem('orbit_last') || 'null');
-  if (last && last.s === sig && Date.now() - last.t < 120000) return note('err', 'e_dup');
-
-  busy = true; $('go').disabled = true; $('go').textContent = t('sending');
-  const { error } = await sb.from('flight_requests').insert(row);   // insert only: customers have no read access
-  busy = false; $('go').disabled = false; $('go').textContent = t('submit');
-  if (error) return note('err', 'e_net');
-  sessionStorage.setItem('orbit_last', JSON.stringify({ s: sig, t: Date.now() }));
-  $('f').reset(); note('ok', 'ok');
+  const lines = [t('wa_hello'), t('wa_req'), '', `${t('wa_trip')}: ${t(round() ? 'round' : 'one')}`, `${t('wa_pax')}: ${pax}`,
+    `${t('wa_dep')}: ${place(a)}`, `${t('wa_dest')}: ${place(b)}`, `${t('wa_ddate')}: ${long(D.dep)}`];
+  if (round()) lines.push(`${t('wa_rdate')}: ${long(D.ret)}`);
+  lines.push('', t('wa_thanks'));
+  const url = `https://wa.me/${WA}?text=${encodeURIComponent(lines.join('\n'))}`;
+  note('ok', 'wa_open');
+  if (!window.open(url, '_blank')) location.href = url;
 });
 </script>
 </body>
