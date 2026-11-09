@@ -1,3 +1,4 @@
+// Covers the networks of: Turkish, Air Arabia, Kuwait Airways, Saudia, Qatar, Pegasus, EgyptAir, Emirates, Etihad, flydubai, flynas, Air France, Jazeera, Riyadh Air, SunExpress.
 // Format: IATA|City|Airport|Arabic city (optional). Customers can still type any other airport freely.
 const AP_DATA = `
 DAM|Damascus|Damascus International|دمشق
@@ -145,6 +146,119 @@ CPT|Cape Town|Cape Town International
 LOS|Lagos|Murtala Muhammed
 ACC|Accra|Kotoka International
 DKR|Dakar|Blaise Diagne
+DIY|Diyarbakır|Diyarbakır Airport
+VAN|Van|Ferit Melen
+ASR|Kayseri|Erkilet
+KYA|Konya|Konya Airport
+SZF|Samsun|Çarşamba
+SFQ|Şanlıurfa|GAP Airport
+MQM|Mardin|Mardin Airport
+MLX|Malatya|Erhaç
+ERZ|Erzurum|Erzurum Airport
+GZP|Alanya|Gazipaşa-Alanya
+NAV|Cappadocia|Nevşehir Kapadokya
+ADF|Adıyaman|Adıyaman Airport
+EZS|Elazığ|Elazığ Airport
+HAM|Hamburg|Hamburg Airport
+STR|Stuttgart|Stuttgart Airport
+CGN|Cologne|Cologne Bonn
+NUE|Nuremberg|Nuremberg Airport
+HAJ|Hannover|Hannover Airport
+LEJ|Leipzig|Leipzig/Halle
+DTM|Dortmund|Dortmund Airport
+BRE|Bremen|Bremen Airport
+FMO|Münster|Münster/Osnabrück
+EIN|Eindhoven|Eindhoven Airport
+RTM|Rotterdam|Rotterdam The Hague
+BSL|Basel|EuroAirport
+CRL|Brussels|Charleroi
+LYS|Lyon|Saint-Exupéry
+NCE|Nice|Côte d'Azur
+MRS|Marseille|Provence
+TLS|Toulouse|Blagnac
+BOD|Bordeaux|Mérignac
+STN|London|Stansted
+LTN|London|Luton
+BHX|Birmingham|Birmingham Airport
+EDI|Edinburgh|Edinburgh Airport
+VCE|Venice|Marco Polo
+NAP|Naples|Capodichino
+BLQ|Bologna|Guglielmo Marconi
+AGP|Málaga|Costa del Sol
+PMI|Palma|Palma de Mallorca
+OPO|Porto|Francisco Sá Carneiro
+BEG|Belgrade|Nikola Tesla
+SJJ|Sarajevo|Sarajevo International
+ZAG|Zagreb|Franjo Tuđman
+TGD|Podgorica|Podgorica Airport
+TIA|Tirana|Nënë Tereza
+SKP|Skopje|Skopje Airport
+LCA|Larnaca|Larnaca International
+MLA|Malta|Malta International
+SKG|Thessaloniki|Macedonia Airport
+SVO|Moscow|Sheremetyevo
+DME|Moscow|Domodedovo
+LED|St Petersburg|Pulkovo
+GYD|Baku|Heydar Aliyev
+TBS|Tbilisi|Tbilisi International
+BUS|Batumi|Batumi International
+EVN|Yerevan|Zvartnots
+ALA|Almaty|Almaty International
+NQZ|Astana|Nursultan Nazarbayev
+TAS|Tashkent|Islam Karimov
+HKT|Phuket|Phuket International
+TPE|Taipei|Taoyuan
+KIX|Osaka|Kansai
+SGN|Ho Chi Minh City|Tan Son Nhat
+KTM|Kathmandu|Tribhuvan
+CCU|Kolkata|Netaji Subhas Chandra Bose
+AMD|Ahmedabad|Sardar Vallabhbhai Patel
+JAI|Jaipur|Jaipur International
+CCJ|Kozhikode|Calicut International
+TRV|Thiruvananthapuram|Trivandrum International
+LKO|Lucknow|Chaudhary Charan Singh
+CGP|Chittagong|Shah Amanat
+ZYL|Sylhet|Osmani International
+MUX|Multan|Multan International
+PEW|Peshawar|Bacha Khan
+SKT|Sialkot|Sialkot International
+LYP|Faisalabad|Faisalabad International
+KBL|Kabul|Hamid Karzai
+PER|Perth|Perth Airport
+BNE|Brisbane|Brisbane Airport
+AKL|Auckland|Auckland Airport
+DAR|Dar es Salaam|Julius Nyerere
+EBB|Entebbe|Entebbe International
+ZNZ|Zanzibar|Abeid Amani Karume
+MBA|Mombasa|Moi International
+ABJ|Abidjan|Félix-Houphouët-Boigny
+JIB|Djibouti|Ambouli|جيبوتي
+MGQ|Mogadishu|Aden Adde|مقديشو
+HGA|Hargeisa|Egal International|هرجيسا
+PZU|Port Sudan|Port Sudan New International|بورتسودان
+MJI|Tripoli|Mitiga International|طرابلس (معيتيقة)
+TNG|Tangier|Ibn Battouta|طنجة
+FEZ|Fez|Fès–Saïs|فاس
+AGA|Agadir|Al Massira|أغادير
+RBA|Rabat|Rabat–Salé|الرباط
+NDR|Nador|Nador International|الناظور
+SPX|Giza|Sphinx International|الجيزة
+RMF|Marsa Alam|Marsa Alam International|مرسى علم
+HMB|Sohag|Sohag International|سوهاج
+ATZ|Assiut|Assiut Airport|أسيوط
+KIK|Kirkuk|Kirkuk Airport|كركوك
+ABT|Al-Baha|Al-Baha Domestic|الباحة
+RAH|Rafha|Rafha Domestic|رفحاء
+BOS|Boston|Logan
+SFO|San Francisco|San Francisco International
+SEA|Seattle|Seattle–Tacoma
+ATL|Atlanta|Hartsfield–Jackson
+IAH|Houston|George Bush Intercontinental
+DFW|Dallas|Dallas/Fort Worth
+MCO|Orlando|Orlando International
+YVR|Vancouver|Vancouver International
+EZE|Buenos Aires|Ezeiza
+GIG|Rio de Janeiro|Galeão
 `.trim().split('\n').map(l => {
   const [code, city, name, ar] = l.split('|');
   return { code, city, name, ar, v: `${city}${ar ? ' ' + ar : ''} – ${name} (${code})` };

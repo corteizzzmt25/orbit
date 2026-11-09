@@ -34,6 +34,13 @@
 .cg button:hover:not(:disabled){background:#eaf4ff}
 .cg button.sel{background:#0a57b8;color:#fff;font-weight:700}
 .cg button:disabled{color:#b9c4da;cursor:not-allowed}
+.row label{position:relative}
+.ac{position:absolute;z-index:45;top:100%;inset-inline:0;margin-top:4px;max-height:272px;overflow:auto;background:#fff;border:1px solid #d5dbec;border-radius:12px;box-shadow:0 18px 50px rgba(10,87,184,.28)}
+.ac[hidden]{display:none}
+.ac div{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;font-weight:400;color:#0b2a5b}
+.ac div b{font-weight:600}.ac div span{flex:1;font-size:.8rem;color:#55627f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ac div em{font-style:normal;font-weight:700;font-size:.8rem;color:#0a57b8;background:#eaf4ff;border-radius:6px;padding:1px 7px}
+.ac div.on,.ac div:hover{background:#eaf4ff}
 .hint{font-size:.82rem;color:#55627f;text-align:center}
 </style>
 </head>
@@ -62,8 +69,8 @@
         <div><div class="lbl" data-i="trip"></div>
           <div class="seg" role="radiogroup"><label><input type="radio" name="tt" value="one" checked><span data-i="one"></span></label><label><input type="radio" name="tt" value="round"><span data-i="round"></span></label></div></div>
         <div class="row">
-          <label><span data-i="from"></span><input id="a" list="ap" maxlength="120" autocomplete="off" required></label>
-          <label><span data-i="to"></span><input id="b" list="ap" maxlength="120" autocomplete="off" required></label>
+          <label><span data-i="from"></span><input id="a" maxlength="120" autocomplete="off" required></label>
+          <label><span data-i="to"></span><input id="b" maxlength="120" autocomplete="off" required></label>
         </div>
         <div class="row one" id="dates">
           <div class="fld"><span class="lbl" data-i="date"></span><div class="dp"><input id="dep" readonly data-ph="pick" aria-haspopup="dialog"></div></div>
@@ -78,8 +85,7 @@
   </div>
 </section>
 
-<datalist id="ap"></datalist>
-<footer><div class="wrap"><span>© <span id="y"></span> ORBIT TRAVEL &amp; TOURISM — <span data-i="foot"></span></span><a data-link="admin.html" data-i="staff"></a></div></footer>
+<footer><div class="wrap"><span>© <span id="y"></span> ORBIT TRAVEL &amp; TOURISM — <span data-i="foot"></span></span></div></footer>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -97,7 +103,6 @@ Object.assign(T.ar, {
   wa_hello:'مرحبًا ORBIT TRAVEL & TOURISM،', wa_req:'أرغب في طلب رحلة طيران.', wa_trip:'نوع الرحلة', wa_pax:'عدد المسافرين', wa_dep:'المغادرة', wa_dest:'الوجهة', wa_ddate:'تاريخ المغادرة', wa_rdate:'تاريخ العودة', wa_thanks:'شكرًا لكم!'
 });
 
-$('ap').innerHTML = AIRPORTS.map(v => `<option value="${v}">`).join('');
 $('y').textContent = new Date().getFullYear();
 $('tel').href = 'tel:' + CFG.phone.replace(/\s/g, ''); $('tel').textContent = CFG.phone;
 $('mail').href = 'mailto:' + CFG.email; $('mail').textContent = CFG.email;
@@ -137,6 +142,39 @@ function picker(key, minFn, onPick) {
 }
 picker('dep', today, () => { if (D.ret && D.ret < D.dep) { D.ret = null; $('ret').value = ''; } });
 picker('ret', () => D.dep || today());
+
+/* ---- havalimanı otomatik tamamlama ---- */
+const norm = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').toLowerCase();
+AP_DATA.forEach(x => { x.c = norm(x.city); x.k = norm(`${x.code} ${x.city} ${x.name} ${x.ar || ''}`); });
+function ac(id) {
+  const inp = $(id), box = document.createElement('div'); let items = [], idx = 0;
+  box.className = 'ac'; box.hidden = true; box.setAttribute('role', 'listbox'); inp.parentElement.append(box);
+  const hide = () => { box.hidden = true; };
+  const mark = () => [...box.children].forEach((c, i) => c.classList.toggle('on', i === idx));
+  const pick = x => { inp.value = x.v; inp.classList.remove('bad'); hide(); };
+  const show = () => {
+    const q = norm(inp.value.trim()); if (!q) return hide();
+    items = AP_DATA.map((x, i) => {
+      const w = x.k.split(' ');
+      const s = x.code.toLowerCase() === q ? 0 : (x.c.startsWith(q) || x.code.toLowerCase().startsWith(q)) ? 1 : w.some(z => z.startsWith(q)) ? 2 : x.k.includes(q) ? 3 : 9;
+      return { x, s, i };
+    }).filter(o => o.s < 9).sort((a, b) => a.s - b.s || a.i - b.i).slice(0, 8).map(o => o.x);
+    if (!items.length) return hide();
+    idx = 0;
+    box.innerHTML = items.map((x, i) => `<div role="option" data-i="${i}"><b>${esc(lang === 'ar' && x.ar ? x.ar : x.city)}</b><span>${esc(x.name)}</span><em>${x.code}</em></div>`).join('');
+    box.hidden = false; mark();
+  };
+  inp.addEventListener('input', show); inp.addEventListener('focus', show); inp.addEventListener('blur', hide);
+  inp.addEventListener('keydown', e => {
+    if (box.hidden) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); idx = (idx + 1) % items.length; mark(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); idx = (idx - 1 + items.length) % items.length; mark(); }
+    else if (e.key === 'Enter' || e.key === 'Tab') { if (e.key === 'Enter') e.preventDefault(); pick(items[idx]); }
+    else if (e.key === 'Escape') hide();
+  });
+  box.addEventListener('mousedown', e => { e.preventDefault(); const d = e.target.closest('[data-i]'); if (d) pick(items[+d.dataset.i]); });
+}
+ac('a'); ac('b');
 
 /* ---- gidiş-dönüş / yolcu ---- */
 document.querySelectorAll('input[name=tt]').forEach(r => r.addEventListener('change', () => {
