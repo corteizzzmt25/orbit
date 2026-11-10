@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>ORBIT — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="logo.jpg"><link rel="stylesheet" href="style.css">
+<script src="common.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+[hidden]{display:none!important}
+.bx{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:24px;padding:28px 0;align-items:start}
+@media(max-width:900px){.bx{grid-template-columns:1fr}}
+.it{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px;flex-wrap:wrap}
+.it img,.it .ph{width:72px;height:54px;object-fit:cover;border-radius:8px;background:#eaf4ff}
+.it .m{flex:1;min-width:140px}.it .m b{display:block;word-break:break-word}
+.tag{font-size:.75rem;border-radius:99px;padding:1px 9px;background:#e4f8ec;color:#11633a}.tag.off{background:#eee;color:#555}
+.ab{display:flex;gap:6px;flex-wrap:wrap}
+.ab button,.ib{border:1px solid var(--line);background:#fff;color:#0a57b8;border-radius:99px;padding:6px 12px;cursor:pointer}
+.ab .d{color:var(--bad)}
+.card textarea{resize:vertical}
+.ck{display:flex;align-items:center;gap:8px}.ck input{width:auto!important}
+#pv{max-width:100%;max-height:160px;border-radius:10px}
+</style>
+</head>
+<body>
+<main class="login" id="lg"><div class="card">
+  <div class="logo" data-logo></div>
+  <h2 data-i="login_t"></h2>
+  <form id="lf" class="f" novalidate style="margin-top:14px">
+    <label><span data-i="email"></span><input id="em" type="email" autocomplete="username" required></label>
+    <label><span data-i="password"></span><input id="pw" type="password" autocomplete="current-password" required></label>
+    <div id="ln" class="note" role="status"></div>
+    <button class="btn" type="submit" data-i="login"></button>
+  </form>
+</div></main>
+
+<div id="ad" hidden>
+<header class="top"><div class="wrap"><div class="logo" data-logo></div>
+  <nav class="nav"><div class="lang"><button data-lang="en">English</button><button data-lang="ar">العربية</button></div><button class="ib" id="lo" data-i="logout"></button></nav></div></header>
+<div class="wrap bx">
+  <div class="card"><h2 id="ftl" data-i="a_t"></h2>
+    <form id="of" class="f" novalidate style="margin-top:14px">
+      <label><span data-i="f_title"></span><input id="ft" maxlength="120"></label>
+      <label><span data-i="f_title_ar"></span><input id="fta" maxlength="120" dir="rtl"></label>
+      <label><span data-i="f_desc"></span><textarea id="fd" rows="3" maxlength="600"></textarea></label>
+      <label><span data-i="f_desc_ar"></span><textarea id="fda" rows="3" maxlength="600" dir="rtl"></textarea></label>
+      <label><span data-i="f_fb"></span><input id="ff" type="url" maxlength="500" placeholder="https://www.facebook.com/…" dir="ltr"></label>
+      <label><span data-i="f_img"></span><input id="fi" type="file" accept="image/jpeg,image/png,image/webp"></label>
+      <img id="pv" alt="" hidden>
+      <label class="ck"><input id="fp" type="checkbox"><span data-i="f_pub"></span></label>
+      <div id="fn" class="note" role="status"></div>
+      <button class="btn" id="sv" type="submit" data-i="save"></button>
+      <button class="ib" id="cx" type="button" data-i="cancel" hidden></button>
+    </form></div>
+  <div id="ls"></div>
+</div></div>
+
+<script>
+const $ = id => document.getElementById(id);
+Object.assign(T.en, { a_t:'Special Offers', f_title:'Title (English)', f_title_ar:'Title (Arabic)', f_desc:'Description (English)', f_desc_ar:'Description (Arabic)', f_fb:'Facebook URL', f_img:'Image (from your phone or computer)', f_pub:'Publish now', save:'Save', cancel:'Cancel', edit:'Edit', pub:'Publish', unpub:'Unpublish', live:'Published', draft:'Unpublished',
+  e_f:'Enter a title and a valid https Facebook link.', e_i:'Image must be JPG, PNG or WebP, up to 5 MB.', e_s:'Could not save. Check your Supabase setup and permissions.', saved:'Saved.', cd:'Delete this offer permanently?' });
+Object.assign(T.ar, { a_t:'العروض الخاصة', f_title:'العنوان (إنجليزي)', f_title_ar:'العنوان (عربي)', f_desc:'الوصف (إنجليزي)', f_desc_ar:'الوصف (عربي)', f_fb:'رابط فيسبوك', f_img:'الصورة (من هاتفك أو حاسوبك)', f_pub:'نشر الآن', save:'حفظ', cancel:'إلغاء', edit:'تعديل', pub:'نشر', unpub:'إلغاء النشر', live:'منشور', draft:'غير منشور',
+  e_f:'أدخل عنوانًا ورابط فيسبوك صحيحًا (https).', e_i:'يجب أن تكون الصورة JPG أو PNG أو WebP وبحجم أقصاه 5 ميغابايت.', e_s:'تعذّر الحفظ. تحقق من إعدادات Supabase والصلاحيات.', saved:'تم الحفظ.', cd:'هل تريد حذف هذا العرض نهائيًا؟' });
+const sb = configured() && window.supabase ? window.supabase.createClient(CFG.url, CFG.key) : null;
+const FB = /^https:\/\/([\w-]+\.)*(facebook\.com|fb\.com|fb\.me|fb\.watch)(\/|\?|#|$)/i;
+let rows = [], edit = null;
+const nt = (id, c, k) => { const n = $(id); n.className = 'note show ' + c; n.textContent = t(k); n.dataset.k = k; };
+const show = on => { $('lg').hidden = on; $('ad').hidden = !on; };
+
+async function enter() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return show(false);
+  const { data } = await sb.from('admins').select('user_id').eq('user_id', session.user.id).maybeSingle();
+  if (!data) { await sb.auth.signOut(); show(false); return nt('ln', 'err', 'e_auth'); }
+  show(true); load();
+}
+$('lf').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!sb) return nt('ln', 'err', 'setup');
+  const { error } = await sb.auth.signInWithPassword({ email: $('em').value.trim(), password: $('pw').value });
+  if (error) return nt('ln', 'err', 'e_login');
+  $('pw').value = ''; await enter();
+});
+$('lo').onclick = async () => { await sb.auth.signOut(); rows = []; show(false); };
+
+async function load() {
+  const { data, error } = await sb.from('offers').select('*').order('created_at', { ascending: false });
+  if (error) return nt('fn', 'err', 'e_s');
+  rows = data; list();
+}
+function list() {
+  const ar = lang === 'ar';
+  $('ls').innerHTML = rows.length ? rows.map(o => `<div class="it" data-id="${esc(o.id)}">${/^https:\/\//.test(o.image_url || '') ? `<img src="${esc(o.image_url)}" alt="">` : '<div class="ph"></div>'}
+    <div class="m"><b>${esc((ar && o.title_ar) || o.title)}</b><span class="tag ${o.is_published ? '' : 'off'}">${t(o.is_published ? 'live' : 'draft')}</span></div>
+    <div class="ab"><button data-a="tg">${t(o.is_published ? 'unpub' : 'pub')}</button><button data-a="ed">${t('edit')}</button><button class="d" data-a="dl">${t('del')}</button></div></div>`).join('') : `<div class="empty">${t('empty')}</div>`;
+}
+document.addEventListener('langchange', () => { if (!$('ad').hidden) list(); document.querySelectorAll('.note.show').forEach(n => { if (n.dataset.k) n.textContent = t(n.dataset.k); }); });
+
+function reset() { $('of').reset(); edit = null; $('pv').hidden = true; $('cx').hidden = true; $('ftl').dataset.i = 'a_t'; $('ftl').textContent = t('a_t'); }
+$('cx').onclick = reset;
+$('fi').addEventListener('change', () => { const f = $('fi').files[0]; $('pv').hidden = !f; if (f) $('pv').src = URL.createObjectURL(f); });
+
+$('ls').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-a]'); if (!b) return;
+  const o = rows.find(r => r.id === b.closest('.it').dataset.id); if (!o) return;
+  if (b.dataset.a === 'tg') { const r = await sb.from('offers').update({ is_published: !o.is_published }).eq('id', o.id); if (r.error) return nt('fn', 'err', 'e_s'); load(); }
+  if (b.dataset.a === 'dl') {
+    if (!confirm(t('cd'))) return;
+    const r = await sb.from('offers').delete().eq('id', o.id); if (r.error) return nt('fn', 'err', 'e_s');
+    if (o.image_path) sb.storage.from('offers').remove([o.image_path]); load();
+  }
+  if (b.dataset.a === 'ed') {
+    edit = o; $('ft').value = o.title || ''; $('fta').value = o.title_ar || ''; $('fd').value = o.description || ''; $('fda').value = o.description_ar || '';
+    $('ff').value = o.facebook_url || ''; $('fp').checked = !!o.is_published; $('fi').value = '';
+    $('pv').hidden = !o.image_url; if (o.image_url) $('pv').src = o.image_url; $('cx').hidden = false; $('of').scrollIntoView({ behavior: 'smooth' });
+  }
+});
+
+$('of').addEventListener('submit', async e => {
+  e.preventDefault();
+  const v = { title: $('ft').value.trim(), title_ar: $('fta').value.trim() || null, description: $('fd').value.trim() || null, description_ar: $('fda').value.trim() || null, facebook_url: $('ff').value.trim(), is_published: $('fp').checked };
+  const file = $('fi').files[0];
+  if (!v.title || !FB.test(v.facebook_url)) return nt('fn', 'err', 'e_f');
+  if (file && (!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size > 5242880)) return nt('fn', 'err', 'e_i');
+  $('sv').disabled = true;
+  try {
+    let old = null;
+    if (file) {
+      const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[file.type], path = `${crypto.randomUUID()}.${ext}`;
+      const up = await sb.storage.from('offers').upload(path, file, { contentType: file.type }); if (up.error) throw up.error;
+      v.image_path = path; v.image_url = sb.storage.from('offers').getPublicUrl(path).data.publicUrl; old = edit && edit.image_path;
+    }
+    const r = edit ? await sb.from('offers').update(v).eq('id', edit.id) : await sb.from('offers').insert(v);
+    if (r.error) throw r.error;
+    if (old) sb.storage.from('offers').remove([old]);
+    reset(); await load(); nt('fn', 'ok', 'saved');
+  } catch (err) { nt('fn', 'err', 'e_s'); }
+  $('sv').disabled = false;
+});
+document.addEventListener('DOMContentLoaded', () => { if (!sb) nt('ln', 'err', 'setup'); else enter(); });
+</script>
+</body>
+</html>

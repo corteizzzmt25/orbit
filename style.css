@@ -1,8 +1,10 @@
+@font-face{font-family:'Canon Arabic';src:local('Canon Arabic'),local('CanonArabic'),url(fonts/CanonArabic-Regular.woff2) format('woff2');font-weight:400;font-display:swap}
+@font-face{font-family:'Canon Arabic';src:local('Canon Arabic Bold'),local('CanonArabic-Bold'),url(fonts/CanonArabic-Bold.woff2) format('woff2');font-weight:700;font-display:swap}
 :root{--navy:#f5faff;--navy2:#eaf4ff;--navy3:#d6e9ff;--gold:#0a57b8;--gold2:#2f8cf0;--ink:#0b2a5b;--mut:#4e6590;--line:rgba(10,87,184,.16);--bad:#c62828;--ok:#1b8a4b}
 *{box-sizing:border-box;margin:0}
 html{scroll-behavior:smooth}
-body{font:16px/1.6 Outfit,Cairo,system-ui,sans-serif;background:var(--navy);color:var(--ink);min-height:100vh}
-[dir=rtl] body{font-family:Cairo,Outfit,system-ui,sans-serif}
+body{font:16px/1.6 'Canon Arabic',Outfit,system-ui,sans-serif;background:var(--navy);color:var(--ink);min-height:100vh}
+[dir=rtl] body{font-family:'Canon Arabic',Outfit,system-ui,sans-serif}
 a{color:inherit;text-decoration:none}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--gold2);outline-offset:2px}

@@ -31,7 +31,7 @@ ar: {
   new_req:'طلب رحلة جديد', details:'طلب الرحلة', setup:'أضف رابط Supabase والمفتاح العام في common.js.', loading:'جارٍ التحميل…'
 }};
 
-let lang = (new URLSearchParams(location.search).get('lang')) || localStorage.getItem('orbit_lang') || 'en';
+let lang = (new URLSearchParams(location.search).get('lang')) || localStorage.getItem('orbit_lang') || 'ar';
 if (!T[lang]) lang = 'en';
 const t = k => T[lang][k] ?? k;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
