@@ -65,7 +65,7 @@ Object.assign(T.ar, { a_t:'العروض الخاصة', f_title:'العنوان (
 const sb = configured() && window.supabase ? window.supabase.createClient(CFG.url, CFG.key) : null;
 const FB = /^https:\/\/([\w-]+\.)*(facebook\.com|fb\.com|fb\.me|fb\.watch)(\/|\?|#|$)/i;
 let rows = [], edit = null;
-const nt = (id, c, k) => { const n = $(id); n.className = 'note show ' + c; n.textContent = t(k); n.dataset.k = k; };
+const nt = (id, c, k, d) => { const n = $(id); n.className = 'note show ' + c; n.textContent = t(k) + (d ? ' [' + d + ']' : ''); n.dataset.k = k; };
 const show = on => { $('lg').hidden = on; $('ad').hidden = !on; };
 
 async function enter() {
@@ -86,7 +86,7 @@ $('lo').onclick = async () => { await sb.auth.signOut(); rows = []; show(false);
 
 async function load() {
   const { data, error } = await sb.from('offers').select('*').order('created_at', { ascending: false });
-  if (error) return nt('fn', 'err', 'e_s');
+  if (error) return nt('fn', 'err', 'e_s', error.message);
   rows = data; list();
 }
 function list() {
@@ -95,7 +95,7 @@ function list() {
     <div class="m"><b>${esc((ar && o.title_ar) || o.title)}</b><span class="tag ${o.is_published ? '' : 'off'}">${t(o.is_published ? 'live' : 'draft')}</span></div>
     <div class="ab"><button data-a="tg">${t(o.is_published ? 'unpub' : 'pub')}</button><button data-a="ed">${t('edit')}</button><button class="d" data-a="dl">${t('del')}</button></div></div>`).join('') : `<div class="empty">${t('empty')}</div>`;
 }
-document.addEventListener('langchange', () => { if (!$('ad').hidden) list(); document.querySelectorAll('.note.show').forEach(n => { if (n.dataset.k) n.textContent = t(n.dataset.k); }); });
+document.addEventListener('langchange', () => { if (!$('ad').hidden) list(); document.querySelectorAll('.note.show').forEach(n => { if (n.dataset.k && !n.textContent.includes('[')) n.textContent = t(n.dataset.k); }); });
 
 function reset() { $('of').reset(); edit = null; $('pv').hidden = true; $('cx').hidden = true; $('ftl').dataset.i = 'a_t'; $('ftl').textContent = t('a_t'); }
 $('cx').onclick = reset;
@@ -135,7 +135,7 @@ $('of').addEventListener('submit', async e => {
     if (r.error) throw r.error;
     if (old) sb.storage.from('offers').remove([old]);
     reset(); await load(); nt('fn', 'ok', 'saved');
-  } catch (err) { nt('fn', 'err', 'e_s'); }
+  } catch (err) { console.error(err); nt('fn', 'err', 'e_s', (err && (err.message || err.error)) || ''); }
   $('sv').disabled = false;
 });
 document.addEventListener('DOMContentLoaded', () => { if (!sb) nt('ln', 'err', 'setup'); else enter(); });
