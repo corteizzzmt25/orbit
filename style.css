@@ -114,7 +114,14 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 [data-theme=dark] .theme{color:#cfe3ff}
 [data-theme=dark]{color-scheme:dark;--navy:#0b1220;--navy2:#0f1a30;--navy3:#16223d;--ink:#e6eefc;--mut:#9fb3d6;--line:rgba(120,160,230,.22)}
 [data-theme=dark] .top{background:rgba(11,18,32,.92)}
-[data-theme=dark] .logo{background:#fff;border-radius:12px;padding:4px 12px}
+[data-theme=dark] .logo,[data-theme=dark] .logo small,[data-theme=dark] .logo em,[data-theme=dark] .login .logo{color:#4da3ff}
+[data-theme=dark] .logo svg [fill="#0a57b8"]{fill:#4da3ff}
+[data-theme=dark] .login{background:linear-gradient(180deg,#0a2a5c,#0b1220)}
+[data-theme=dark] .it{background:#121c33;border-color:#2a3b5e}
+[data-theme=dark] .ab button,[data-theme=dark] .ib{background:#121c33;color:#cfe3ff;border-color:#2a3b5e}
+[data-theme=dark] .ab .d{color:#ff8a8a}
+[data-theme=dark] .it img,[data-theme=dark] .it .ph{background:#1c2b4a}
+[data-theme=dark] .tag{background:#12301f;color:#8be0ae}[data-theme=dark] .tag.off{background:#243049;color:#9fb3d6}
 [data-theme=dark] .hero{background:linear-gradient(180deg,#0a2a5c 0,#0b1b3a 45%,#0b1220 100%)}
 [data-theme=dark] .hero svg.bg{opacity:.2}
 [data-theme=dark] .card{background:#121c33;color:#e6eefc;box-shadow:0 24px 60px rgba(0,0,0,.5)}
