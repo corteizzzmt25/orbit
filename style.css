@@ -105,3 +105,36 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .msg.new{animation:flash2 2.4s}@keyframes flash2{0%,40%{background:#fff4c2}}
 .login{background:linear-gradient(180deg,#4db8ff,#fff)}
 .toast{color:#fff}
+
+/* ===== theme toggle + dark mode ===== */
+.theme{width:38px;height:38px;border-radius:50%;border:1px solid var(--gold);background:none;color:var(--gold);cursor:pointer;display:grid;place-items:center;transition:.25s}
+.theme:hover{background:var(--gold);color:#fff}
+.theme .sun{display:none}
+[data-theme=dark] .theme .sun{display:block}[data-theme=dark] .theme .moon{display:none}
+[data-theme=dark] .theme{color:#cfe3ff}
+[data-theme=dark]{color-scheme:dark;--navy:#0b1220;--navy2:#0f1a30;--navy3:#16223d;--ink:#e6eefc;--mut:#9fb3d6;--line:rgba(120,160,230,.22)}
+[data-theme=dark] .top{background:rgba(11,18,32,.92)}
+[data-theme=dark] .logo{background:#fff;border-radius:12px;padding:4px 12px}
+[data-theme=dark] .hero{background:linear-gradient(180deg,#0a2a5c 0,#0b1b3a 45%,#0b1220 100%)}
+[data-theme=dark] .hero svg.bg{opacity:.2}
+[data-theme=dark] .card{background:#121c33;color:#e6eefc;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+[data-theme=dark] .card .s,[data-theme=dark] .hint{color:#9fb3d6}
+[data-theme=dark] label,[data-theme=dark] .lbl{color:#c9d8f5}
+[data-theme=dark] .card input,[data-theme=dark] .card select,[data-theme=dark] .card textarea{background:#0d1628;border-color:#2a3b5e;color:#e6eefc}
+[data-theme=dark] .card input:focus,[data-theme=dark] .card textarea:focus{border-color:#2f8cf0;background:#0d1628}
+[data-theme=dark] .seg,[data-theme=dark] .step{background:#0d1628}
+[data-theme=dark] .step{border-color:#2a3b5e}
+[data-theme=dark] .seg span{color:#c9d8f5}
+[data-theme=dark] .seg input:checked+span{color:#fff}
+[data-theme=dark] .step button:disabled{background:#2a3b5e}
+[data-theme=dark] .cal,[data-theme=dark] .ac,[data-theme=dark] .fc,[data-theme=dark] .of{background:#121c33;border-color:#2a3b5e}
+[data-theme=dark] .cg button,[data-theme=dark] .ac div{color:#e6eefc}
+[data-theme=dark] .cg i,[data-theme=dark] .ac div span{color:#9fb3d6}
+[data-theme=dark] .cg button:hover:not(:disabled),[data-theme=dark] .ac div.on,[data-theme=dark] .ac div:hover{background:#1c2b4a}
+[data-theme=dark] .cg button.sel{background:#0a57b8;color:#fff}
+[data-theme=dark] .cg button:disabled{color:#3b4b6d}
+[data-theme=dark] .nv,[data-theme=dark] .ac div em{background:#1c2b4a;color:#4da3ff}
+[data-theme=dark] .sec h2,[data-theme=dark] .fc b{color:#4da3ff}
+[data-theme=dark] .of img{background:#1c2b4a}
+[data-theme=dark] .note.ok{background:#12301f;color:#8be0ae}
+[data-theme=dark] .note.err{background:#3a1616;color:#ffb4b4}
