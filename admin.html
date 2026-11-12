@@ -27,6 +27,8 @@
 .card textarea{resize:vertical}
 .ck{display:flex;align-items:center;gap:8px}.ck input{width:auto!important}
 #pv{width:96px;height:64px;object-fit:cover;border-radius:10px;flex:none}
+.bx>*{min-width:0}.tw{overflow-x:auto}.ut{width:100%;border-collapse:collapse;font-size:.92rem}.ut th,.ut td{text-align:start;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}.ut th{color:var(--mut);font-weight:600}
+.bar2{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.bar2 input{flex:1;min-width:180px;width:auto!important}.bar2 select{min-width:170px;width:auto!important}
 </style>
 </head>
 <body>
@@ -59,6 +61,14 @@
       <div class="fa"><label class="ck"><input id="fp" type="checkbox"><span data-i="f_pub"></span></label><button class="btn" id="sv" type="submit" data-i="save"></button><button class="ib" id="cx" type="button" data-i="cancel" hidden></button></div>
     </form></div>
   <div id="ls"></div>
+  <div class="card"><h2 data-i="rs_t"></h2>
+    <label class="ck" style="margin-top:12px"><input id="ue" type="checkbox"><span data-i="rs_u"></span></label>
+    <div id="rn" class="note" role="status"></div>
+    <div class="fa"><button class="btn" id="rsv" type="button" data-i="save"></button></div></div>
+  <div class="card"><h2 data-i="us_t"></h2>
+    <div class="bar2"><input id="uq" type="search" data-ph="us_q" autocomplete="off"><select id="uf"><option value="all" data-i="f_all"></option><option value="active" data-i="f_act"></option><option value="suspended" data-i="f_sus"></option><option value="limit" data-i="f_lim"></option></select></div>
+    <div id="un" class="note" role="status"></div>
+    <div class="tw" id="ut"></div></div>
 </div></div>
 
 <script>
@@ -67,6 +77,31 @@ Object.assign(T.en, { a_t:'Special Offers', f_title:'Title (English)', f_title_a
   e_f:'Enter a title and a valid https Facebook link.', e_i:'Image must be JPG, PNG or WebP, up to 5 MB.', e_s:'Could not save. Check your Supabase setup and permissions.', saved:'Saved.', cd:'Delete this offer permanently?' });
 Object.assign(T.ar, { a_t:'العروض الخاصة', f_title:'العنوان (إنجليزي)', f_title_ar:'العنوان (عربي)', f_desc:'الوصف (إنجليزي)', f_desc_ar:'الوصف (عربي)', f_fb:'رابط فيسبوك', f_img:'الصورة (من هاتفك أو حاسوبك)', f_pub:'نشر الآن', save:'حفظ', cancel:'إلغاء', edit:'تعديل', pub:'نشر', unpub:'إلغاء النشر', live:'منشور', draft:'غير منشور',
   e_f:'أدخل عنوانًا ورابط فيسبوك صحيحًا (https).', e_i:'يجب أن تكون الصورة JPG أو PNG أو WebP وبحجم أقصاه 5 ميغابايت.', e_s:'تعذّر الحفظ. تحقق من إعدادات Supabase والصلاحيات.', saved:'تم الحفظ.', cd:'هل تريد حذف هذا العرض نهائيًا؟' });
+Object.assign(T.en, { rs_t:'Registration settings', rs_u:'Enable the username field (registration and login)', us_t:'Users', us_q:'Search phone or username', f_all:'All', f_act:'Active', f_sus:'Suspended', f_lim:'Daily limit reached',
+  c_user:'Username', c_phone:'Phone', c_date:'Registered', c_stat:'Status', c_used:'Used today', c_left:'Left today', do_sus:'Suspend', do_act:'Activate', us_empty:'No users found.' });
+Object.assign(T.ar, { rs_t:'إعدادات التسجيل', rs_u:'تفعيل حقل اسم المستخدم (التسجيل وتسجيل الدخول)', us_t:'المستخدمون', us_q:'ابحث برقم الهاتف أو اسم المستخدم', f_all:'الكل', f_act:'نشط', f_sus:'موقوف', f_lim:'استنفد حصة اليوم',
+  c_user:'اسم المستخدم', c_phone:'الهاتف', c_date:'تاريخ التسجيل', c_stat:'الحالة', c_used:'المستخدم اليوم', c_left:'المتبقي اليوم', do_sus:'إيقاف', do_act:'تفعيل', us_empty:'لا يوجد مستخدمون.' });
+let USERS = [];
+async function loadSettings() { const { data } = await sb.from('registration_settings').select('username_enabled').eq('id', 1).maybeSingle(); $('ue').checked = !!(data && data.username_enabled); }
+$('rsv').onclick = async () => {
+  const { error } = await sb.from('registration_settings').upsert({ id: 1, username_enabled: $('ue').checked });
+  error ? nt('rn', 'err', 'e_s', error.message) : nt('rn', 'ok', 'saved');
+};
+async function loadUsers() { const { data, error } = await sb.rpc('admin_list_users'); if (error) return nt('un', 'err', 'e_s', error.message); USERS = data || []; drawUsers(); }
+function drawUsers() {
+  const q = $('uq').value.trim().toLowerCase(), f = $('uf').value;
+  const rows = USERS.filter(u => (!q || (u.phone || '').toLowerCase().includes(q) || (u.username || '').toLowerCase().includes(q))
+    && (f === 'all' || (f === 'limit' ? u.left_today === 0 : u.status === f)));
+  $('ut').innerHTML = rows.length ? `<table class="ut"><thead><tr><th>${t('c_user')}</th><th>${t('c_phone')}</th><th>${t('c_date')}</th><th>${t('c_stat')}</th><th>${t('c_used')}</th><th>${t('c_left')}</th><th></th></tr></thead><tbody>${rows.map(u =>
+    `<tr><td>${esc(u.username || '—')}</td><td dir="ltr">${esc(u.phone)}</td><td>${new Date(u.created_at).toLocaleDateString(loc())}</td><td><span class="tag ${u.status === 'active' ? '' : 'off'}">${t(u.status === 'active' ? 'f_act' : 'f_sus')}</span></td><td>${u.used_today}</td><td>${u.left_today}</td><td class="ab"><button data-uid="${esc(u.id)}" data-st="${u.status === 'active' ? 'suspended' : 'active'}">${t(u.status === 'active' ? 'do_sus' : 'do_act')}</button></td></tr>`).join('')}</tbody></table>`
+    : `<div class="empty">${t('us_empty')}</div>`;
+}
+$('uq').addEventListener('input', drawUsers); $('uf').addEventListener('change', drawUsers);
+$('ut').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-uid]'); if (!b) return;
+  const { error } = await sb.from('profiles').update({ status: b.dataset.st }).eq('id', b.dataset.uid);
+  error ? nt('un', 'err', 'e_s', error.message) : loadUsers();
+});
 Object.assign(T.en, { theme_t:'Switch light / dark mode' }); Object.assign(T.ar, { theme_t:'تبديل الوضع الفاتح / الداكن' });
 const setTh = () => document.querySelectorAll('.theme').forEach(b => { b.title = t('theme_t'); b.setAttribute('aria-label', t('theme_t')); });
 document.addEventListener('langchange', setTh);
@@ -86,7 +121,7 @@ async function enter() {
   if (!session) return show(false);
   const { data } = await sb.from('admins').select('user_id').eq('user_id', session.user.id).maybeSingle();
   if (!data) { await sb.auth.signOut(); show(false); return nt('ln', 'err', 'e_auth'); }
-  show(true); load();
+  show(true); load(); loadSettings(); loadUsers();
 }
 $('lf').addEventListener('submit', async e => {
   e.preventDefault();
@@ -108,7 +143,7 @@ function list() {
     <div class="m"><b>${esc((ar && o.title_ar) || o.title)}</b><span class="tag ${o.is_published ? '' : 'off'}">${t(o.is_published ? 'live' : 'draft')}</span></div>
     <div class="ab"><button data-a="tg">${t(o.is_published ? 'unpub' : 'pub')}</button><button data-a="ed">${t('edit')}</button><button class="d" data-a="dl">${t('del')}</button></div></div>`).join('') : `<div class="empty">${t('empty')}</div>`;
 }
-document.addEventListener('langchange', () => { if (!$('ad').hidden) list(); document.querySelectorAll('.note.show').forEach(n => { if (n.dataset.k && !n.textContent.includes('[')) n.textContent = t(n.dataset.k); }); });
+document.addEventListener('langchange', () => { if (!$('ad').hidden) { list(); drawUsers(); } document.querySelectorAll('.note.show').forEach(n => { if (n.dataset.k && !n.textContent.includes('[')) n.textContent = t(n.dataset.k); }); });
 
 function reset() { $('of').reset(); edit = null; $('pv').hidden = true; $('cx').hidden = true; $('ftl').dataset.i = 'a_t'; $('ftl').textContent = t('a_t'); }
 $('cx').onclick = reset;

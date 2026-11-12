@@ -145,3 +145,6 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 [data-theme=dark] .of img{background:#1c2b4a}
 [data-theme=dark] .note.ok{background:#12301f;color:#8be0ae}
 [data-theme=dark] .note.err{background:#3a1616;color:#ffb4b4}
+
+[data-theme=dark] .lnk{color:#4da3ff}
+[data-theme=dark] .note.info{background:#10284d;color:#9cc8ff}

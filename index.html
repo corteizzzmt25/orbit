@@ -10,6 +10,7 @@
 <link rel="icon" href="logo.jpg"><link rel="stylesheet" href="style.css">
 <script src="common.js"></script>
 <script src="airports.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <style>
 .lbl{font-size:.88rem;font-weight:500;color:#26335a}
 .fld{display:grid;gap:5px;position:relative}.fld[hidden]{display:none}
@@ -65,6 +66,15 @@ a.btn{display:block;text-align:center}
 @media(max-width:900px){.two{grid-template-columns:1fr}}
 .hint{font-size:.82rem;color:#55627f;text-align:center}
 .seg.three{grid-template-columns:repeat(3,1fr)}.seg.three span{padding:9px 4px;font-size:.92rem}.seg.bad{outline:1.5px solid #d33;outline-offset:1px}
+.acct{border:1px solid var(--gold);border-radius:99px;padding:5px 14px;background:none;color:inherit;cursor:pointer;transition:.25s}.acct:hover{background:var(--gold);color:#fff}
+.ov{position:fixed;inset:0;z-index:100;background:rgba(5,15,40,.55);display:grid;place-items:center;padding:16px}
+.ov[hidden],.ov [hidden],#quota[hidden]{display:none!important}
+.md{width:min(420px,100%);max-height:calc(100vh - 32px);overflow:auto;position:relative}
+.x{position:absolute;top:10px;inset-inline-end:14px;border:0;background:none;font-size:1.7rem;line-height:1;cursor:pointer;color:inherit}
+.lnk{background:none;border:0;color:#0a57b8;cursor:pointer;text-decoration:underline;padding:4px;font-size:.92rem}
+.ck{display:flex;align-items:center;gap:8px}.ck input{width:auto!important}
+.note.info{background:#eaf4ff;color:#0a57b8}
+#quota{font-weight:600}
 </style>
 </head>
 <body>
@@ -76,6 +86,7 @@ a.btn{display:block;text-align:center}
     <a href="index.html" data-i="home"></a>
     <div class="contact"><a id="tel"></a><a id="mail"></a></div>
     <div class="lang"><button data-lang="en">English</button><button data-lang="ar">العربية</button></div>
+    <button type="button" class="acct" id="acct"></button>
     <button type="button" class="theme" id="th" data-al="theme_t"><svg class="moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><svg class="sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
   </nav>
 </div></header>
@@ -106,6 +117,7 @@ a.btn{display:block;text-align:center}
         <div class="fld"><span class="lbl" data-i="pax"></span><div class="step"><button type="button" id="mi" aria-label="−">−</button><b id="px" aria-live="polite">1</b><button type="button" id="pl" aria-label="+">+</button></div></div>
         <div class="fld"><span class="lbl" data-i="bg_t"></span><div class="seg three" id="bgs" role="radiogroup"><label><input type="radio" name="bg" value="n"><span data-i="bg_n"></span></label><label><input type="radio" name="bg" value="20"><span data-i="bg_20"></span></label><label><input type="radio" name="bg" value="30"><span data-i="bg_30"></span></label></div></div>
         <div id="note" class="note" role="status" aria-live="polite"></div>
+        <p id="quota" class="hint" hidden></p>
         <button class="btn" id="go" type="submit" data-i="submit"></button>
       </form>
     </div>
@@ -127,6 +139,18 @@ a.btn{display:block;text-align:center}
     </form></div>
   <div class="card"><h2 data-i="sv_t"></h2><p class="s" data-i="sv_p"></p><p data-i="sv_d"></p><p class="hint" style="text-align:start;margin:12px 0" data-i="sv_n"></p><a class="btn" id="hw" target="_blank" rel="noopener noreferrer" data-i="sv_go"></a></div>
 </div></section>
+<div id="au" class="ov" hidden><div class="card md" role="dialog" aria-modal="true" aria-labelledby="aut">
+  <button type="button" class="x" id="aux" aria-label="×">×</button>
+  <h2 id="aut"></h2><p class="s" data-i="au_s"></p>
+  <form id="auf" class="f" novalidate>
+    <label><span data-i="au_phone"></span><input id="aph" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" placeholder="+963 9xx xxx xxx" maxlength="25"></label>
+    <label id="aunw" hidden><span id="aunl"></span><input id="aun" maxlength="30" autocomplete="username"></label>
+    <label><span data-i="au_pass"></span><input id="apw" type="password" autocomplete="current-password" maxlength="72"></label>
+    <label class="ck"><input id="arm" type="checkbox"><span data-i="au_rem"></span></label>
+    <div id="anote" class="note" role="status" aria-live="polite"></div>
+    <button class="btn" id="aub" type="submit"></button>
+    <button class="lnk" type="button" id="asw"></button>
+  </form></div></div>
 <footer><div class="wrap"><span>© <span id="y"></span> ORBIT TRAVEL &amp; TOURISM — <span data-i="foot"></span></span></div></footer>
 
 <script>
@@ -240,8 +264,9 @@ function place(raw) {
   return x ? `${lang === 'ar' && x.ar ? x.ar : x.city} (${x.code})` : r;
 }
 
-$('f').addEventListener('submit', e => {
+$('f').addEventListener('submit', async e => {
   e.preventDefault();
+  if (!USER) { openAuth('login', true); return; }
   document.querySelectorAll('.bad').forEach(x => x.classList.remove('bad'));
   const a = $('a').value.trim(), b = $('b').value.trim(), bad = [];
   if (a.length < 2) bad.push('a'); if (b.length < 2) bad.push('b'); if (!D.dep) bad.push('dep'); if (round() && !D.ret) bad.push('ret'); if (!document.querySelector('input[name=bg]:checked')) bad.push('bgs');
@@ -250,6 +275,7 @@ $('f').addEventListener('submit', e => {
   if (D.dep < today()) { $('dep').classList.add('bad'); return note('err', 'e_date'); }
   if (round() && D.ret < D.dep) { $('ret').classList.add('bad'); return note('err', 'e_ret'); }
 
+  if (!(await consumeQuota())) return;
   const lines = [t('wa_hello'), t('wa_req'), '', `${t('wa_trip')}: ${t(round() ? 'round' : 'one')}`, `${t('wa_pax')}: ${pax}`, `${t('wa_bag')}: ${t('bg_' + document.querySelector('input[name=bg]:checked').value)}`,
     `${t('wa_dep')}: ${place(a)}`, `${t('wa_dest')}: ${place(b)}`, `${t('wa_ddate')}: ${long(D.dep)}`];
   if (round()) lines.push(`${t('wa_rdate')}: ${long(D.ret)}`);
@@ -327,6 +353,118 @@ document.addEventListener('langchange', () => {
   $('hw').href = `https://wa.me/${WA}?text=${encodeURIComponent(t('wa_hello') + '\n' + t('sv_msg'))}`;
   const n = $('mnote'); if (n.dataset.k) n.textContent = t(n.dataset.k);
 });
+</script>
+<script>
+/* ---- accounts, session, daily quota (Supabase Auth + server-side RPC) ---- */
+Object.assign(T.en, {
+  au_login:'Log in', au_reg:'Create account', au_logout:'Log out', au_s:'Log in or create an account to send flight requests.', au_phone:'Phone number (with country code)',
+  au_user:'Username', au_user_o:'Username (optional)', au_pass:'Password', au_rem:'Remember me', au_to_reg:'No account? Create one', au_to_login:'Already have an account? Log in',
+  au_need:'Please log in or create an account to send a flight request.',
+  au_e_phone:'Enter a valid phone number with country code, e.g. +963 9xx xxx xxx.', au_e_pass:'Password must be at least 8 characters.', au_e_user:'Enter a username (3–30 letters, numbers, . _ -).',
+  au_e_tu:'This username is already taken.', au_e_tp:'An account with this phone number already exists.', au_e_cred:'Incorrect phone number or password.', au_e_um:'Username does not match this account.',
+  au_e_gen:'Something went wrong. Please try again.', au_e_off:'Accounts are not available right now.',
+  q_left:'Requests left today', q_none:'You have used all your requests for today. They renew at 00:00 Damascus time (Asia/Damascus).', q_err:'Could not check your daily quota. Please try again.',
+  q_susp:'This account is suspended. Please contact the agency.', q_np:'This account cannot send flight requests. Please create a customer account.'
+});
+Object.assign(T.ar, {
+  au_login:'تسجيل الدخول', au_reg:'إنشاء حساب', au_logout:'تسجيل الخروج', au_s:'سجّل الدخول أو أنشئ حسابًا لإرسال طلبات الرحلات.', au_phone:'رقم الهاتف (مع رمز الدولة)',
+  au_user:'اسم المستخدم', au_user_o:'اسم المستخدم (اختياري)', au_pass:'كلمة المرور', au_rem:'تذكرني', au_to_reg:'ليس لديك حساب؟ أنشئ حسابًا', au_to_login:'لديك حساب؟ سجّل الدخول',
+  au_need:'يرجى تسجيل الدخول أو إنشاء حساب لإرسال طلب رحلة.',
+  au_e_phone:'أدخل رقم هاتف صحيحًا مع رمز الدولة، مثل 963 9xx xxx xxx+.', au_e_pass:'يجب ألا تقل كلمة المرور عن 8 أحرف.', au_e_user:'أدخل اسم مستخدم (من 3 إلى 30 حرفًا أو رقمًا أو . _ -).',
+  au_e_tu:'اسم المستخدم مستخدم مسبقًا.', au_e_tp:'يوجد حساب بهذا الرقم مسبقًا.', au_e_cred:'رقم الهاتف أو كلمة المرور غير صحيحة.', au_e_um:'اسم المستخدم لا يطابق هذا الحساب.',
+  au_e_gen:'حدث خطأ ما. حاول مرة أخرى.', au_e_off:'الحسابات غير متاحة حاليًا.',
+  q_left:'عدد الطلبات المتبقية اليوم', q_none:'لقد استخدمت جميع طلباتك لهذا اليوم. تتجدد عند الساعة 00:00 بتوقيت دمشق.', q_err:'تعذّر التحقق من حصتك اليومية. حاول مرة أخرى.',
+  q_susp:'هذا الحساب موقوف. يرجى التواصل مع الوكالة.', q_np:'لا يمكن لهذا الحساب إرسال طلبات رحلات. يرجى إنشاء حساب عميل.'
+});
+const remember = () => { try { return localStorage.getItem('orbit_remember') === '1'; } catch (e) { return false; } };
+const setRemember = v => { try { localStorage.setItem('orbit_remember', v ? '1' : '0'); } catch (e) {} };
+const store = {   // "remember me" -> localStorage (long-lived); otherwise sessionStorage (ends when the browser closes)
+  getItem: k => { try { const a = remember() ? localStorage : sessionStorage, b = remember() ? sessionStorage : localStorage; return a.getItem(k) ?? b.getItem(k); } catch (e) { return null; } },
+  setItem: (k, v) => { try { const r = remember(); (r ? localStorage : sessionStorage).setItem(k, v); (r ? sessionStorage : localStorage).removeItem(k); } catch (e) {} },
+  removeItem: k => { try { localStorage.removeItem(k); sessionStorage.removeItem(k); } catch (e) {} }
+};
+const sb = configured() && window.supabase ? window.supabase.createClient(CFG.url, CFG.key, { auth: { storage: store, storageKey: 'orbit-user-auth', persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } }) : null;
+const AUTH_DOMAIN = CFG.authDomain || (CFG.email.split('@')[1] || 'orbit-travel.com');
+const emailOf = p => p.slice(1) + '@' + AUTH_DOMAIN;
+const UN_RE = /^[\p{L}\p{N}._-]{3,30}$/u;
+let USER = null, QUOTA = null, MODE = 'login', UNAME = false;
+
+function normPhone(raw) {   // -> E.164 (+9639...) or null
+  let s = String(raw || '').trim().replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[\s\-().]/g, '');
+  if (s.startsWith('00')) s = '+' + s.slice(2);
+  else if (s.startsWith('+')) { /* already international */ }
+  else if (s.startsWith('0')) s = '+963' + s.slice(1);    // local Syrian format: 09xx...
+  else if (s.startsWith('963')) s = '+' + s;
+  else return null;
+  s = s.replace(/^\+9630/, '+963');
+  return /^\+[1-9]\d{7,14}$/.test(s) ? s : null;
+}
+const anote = (k, c) => { const n = $('anote'); n.className = 'note show ' + (c || 'err'); n.textContent = t(k); n.dataset.k = k; };
+function render() {
+  const reg = MODE === 'reg';
+  $('aut').textContent = t(reg ? 'au_reg' : 'au_login'); $('aub').textContent = t(reg ? 'au_reg' : 'au_login'); $('asw').textContent = t(reg ? 'au_to_login' : 'au_to_reg');
+  $('aunw').hidden = !UNAME; $('aunl').textContent = t(reg ? 'au_user' : 'au_user_o'); $('apw').autocomplete = reg ? 'new-password' : 'current-password';
+}
+function ui() { $('acct').textContent = t(USER ? 'au_logout' : 'au_login'); drawQuota(); }
+function drawQuota() { const q = $('quota'); if (!USER || !QUOTA) { q.hidden = true; return; } q.hidden = false; q.textContent = `${t('q_left')}: ${QUOTA.remaining}/${QUOTA.limit}`; }
+async function refreshQuota() { if (!sb || !USER) { QUOTA = null; return drawQuota(); } const { data, error } = await sb.rpc('my_quota'); QUOTA = error ? null : data; drawQuota(); }
+function openAuth(mode, gate) {
+  MODE = mode; $('au').hidden = false; $('apw').value = ''; $('anote').className = 'note'; $('anote').textContent = ''; delete $('anote').dataset.k;
+  $('arm').checked = remember(); render(); if (gate) anote('au_need', 'info'); setTimeout(() => $('aph').focus(), 50);
+  if (sb) sb.rpc('get_registration_settings').then(({ data }) => { UNAME = !!(data && data.username_enabled); render(); });
+}
+const closeAuth = () => { $('au').hidden = true; };
+async function consumeQuota() {
+  $('go').disabled = true;
+  try {
+    const { data, error } = await sb.rpc('consume_flight_request');
+    if (error || !data) { note('err', 'q_err'); return false; }
+    if (!data.ok) {
+      if (data.reason === 'limit') { QUOTA = { remaining: 0, limit: data.limit }; drawQuota(); note('err', 'q_none'); }
+      else if (data.reason === 'suspended') note('err', 'q_susp');
+      else if (data.reason === 'auth') openAuth('login', true);
+      else note('err', 'q_np');
+      return false;
+    }
+    QUOTA = { remaining: data.remaining, limit: data.limit }; drawQuota(); return true;
+  } catch (e) { note('err', 'q_err'); return false; } finally { $('go').disabled = false; }
+}
+$('acct').addEventListener('click', () => { if (USER && sb) { sb.auth.signOut(); } else openAuth('login'); });
+$('aux').addEventListener('click', closeAuth);
+$('au').addEventListener('mousedown', e => { if (e.target === $('au')) closeAuth(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('au').hidden) closeAuth(); });
+$('asw').addEventListener('click', () => { MODE = MODE === 'reg' ? 'login' : 'reg'; $('anote').className = 'note'; render(); });
+$('auf').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!sb) return anote('au_e_off');
+  const reg = MODE === 'reg', phone = normPhone($('aph').value), pass = $('apw').value, un = $('aun').value.trim();
+  if (!phone) return anote('au_e_phone');
+  if (reg && pass.length < 8) return anote('au_e_pass');
+  if (!pass) return anote('au_e_cred');
+  if (reg && UNAME && !UN_RE.test(un)) return anote('au_e_user');
+  setRemember($('arm').checked); $('aub').disabled = true;
+  try {
+    if (reg) {
+      if (UNAME) { const { data } = await sb.rpc('username_available', { u: un }); if (data === false) return anote('au_e_tu'); }
+      const { error } = await sb.auth.signUp({ email: emailOf(phone), password: pass, options: { data: { phone, username: UNAME ? un : null } } });
+      if (error) return anote(error.code === 'user_already_exists' || /already/i.test(error.message) ? 'au_e_tp' : 'au_e_gen');
+    }
+    const { data, error } = await sb.auth.signInWithPassword({ email: emailOf(phone), password: pass });
+    if (error || !data.session) return anote(error && error.status === 400 ? 'au_e_cred' : 'au_e_gen');
+    if (!reg && UNAME && un) {
+      const { data: pr } = await sb.from('profiles').select('username').eq('id', data.session.user.id).maybeSingle();
+      if (!pr || (pr.username || '').toLowerCase() !== un.toLowerCase()) { await sb.auth.signOut(); return anote('au_e_um'); }
+    }
+    closeAuth();
+  } catch (err) { anote('au_e_gen'); } finally { $('aub').disabled = false; }
+});
+document.addEventListener('langchange', () => {
+  render(); ui(); const n = $('anote'); if (n.dataset.k && n.classList.contains('show')) n.textContent = t(n.dataset.k);
+});
+if (sb) {
+  sb.auth.getSession().then(({ data }) => { USER = data.session ? data.session.user : null; ui(); refreshQuota(); });
+  sb.auth.onAuthStateChange((ev, s) => { const u = s ? s.user : null, changed = (u && u.id) !== (USER && USER.id); USER = u; ui(); if (changed) setTimeout(refreshQuota, 0); });
+}
 </script>
 </body>
 </html>
