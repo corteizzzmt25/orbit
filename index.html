@@ -72,6 +72,7 @@ a.btn{display:block;text-align:center}
 .md{width:min(420px,100%);max-height:calc(100vh - 32px);overflow:auto;position:relative}
 .x{position:absolute;top:10px;inset-inline-end:14px;border:0;background:none;font-size:1.7rem;line-height:1;cursor:pointer;color:inherit}
 .lnk{background:none;border:0;color:#0a57b8;cursor:pointer;text-decoration:underline;padding:4px;font-size:.92rem}
+.ph2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:8px}
 .ck{display:flex;align-items:center;gap:8px}.ck input{width:auto!important}
 .note.info{background:#eaf4ff;color:#0a57b8}
 #quota{font-weight:600}
@@ -143,7 +144,7 @@ a.btn{display:block;text-align:center}
   <button type="button" class="x" id="aux" aria-label="×">×</button>
   <h2 id="aut"></h2><p class="s" data-i="au_s"></p>
   <form id="auf" class="f" novalidate>
-    <label><span data-i="au_phone"></span><input id="aph" type="tel" inputmode="tel" autocomplete="tel" dir="ltr" placeholder="+963 9xx xxx xxx" maxlength="25"></label>
+    <div class="fld"><span class="lbl" data-i="au_phone"></span><div class="ph2"><select id="acc" aria-label="Country code"></select><input id="aph" type="tel" inputmode="tel" autocomplete="tel-national" dir="ltr" maxlength="25"></div></div>
     <label id="aunw" hidden><span id="aunl"></span><input id="aun" maxlength="30" autocomplete="username"></label>
     <label><span data-i="au_pass"></span><input id="apw" type="password" autocomplete="current-password" maxlength="72"></label>
     <label class="ck"><input id="arm" type="checkbox"><span data-i="au_rem"></span></label>
@@ -357,20 +358,20 @@ document.addEventListener('langchange', () => {
 <script>
 /* ---- accounts, session, daily quota (Supabase Auth + server-side RPC) ---- */
 Object.assign(T.en, {
-  au_login:'Log in', au_reg:'Create account', au_logout:'Log out', au_s:'Log in or create an account to send flight requests.', au_phone:'Phone number (with country code)',
+  au_login:'Log in', au_reg:'Create account', au_logout:'Log out', au_s:'Log in or create an account to send flight requests.', au_phone:'Phone number',
   au_user:'Username', au_user_o:'Username (optional)', au_pass:'Password', au_rem:'Remember me', au_to_reg:'No account? Create one', au_to_login:'Already have an account? Log in',
   au_need:'Please log in or create an account to send a flight request.',
-  au_e_phone:'Enter a valid phone number with country code, e.g. +963 9xx xxx xxx.', au_e_pass:'Password must be at least 8 characters.', au_e_user:'Enter a username (3–30 letters, numbers, . _ -).',
+  au_e_phone:'Enter a valid phone number.', au_e_pass:'Password must be at least 8 characters.', au_e_user:'Enter a username (3–30 letters, numbers, . _ -).',
   au_e_tu:'This username is already taken.', au_e_tp:'An account with this phone number already exists.', au_e_cred:'Incorrect phone number or password.', au_e_um:'Username does not match this account.',
   au_e_gen:'Something went wrong. Please try again.', au_e_off:'Accounts are not available right now.',
   q_left:'Requests left today', q_none:'You have used all your requests for today. They renew at 00:00 Damascus time (Asia/Damascus).', q_err:'Could not check your daily quota. Please try again.',
   q_susp:'This account is suspended. Please contact the agency.', q_np:'This account cannot send flight requests. Please create a customer account.'
 });
 Object.assign(T.ar, {
-  au_login:'تسجيل الدخول', au_reg:'إنشاء حساب', au_logout:'تسجيل الخروج', au_s:'سجّل الدخول أو أنشئ حسابًا لإرسال طلبات الرحلات.', au_phone:'رقم الهاتف (مع رمز الدولة)',
+  au_login:'تسجيل الدخول', au_reg:'إنشاء حساب', au_logout:'تسجيل الخروج', au_s:'سجّل الدخول أو أنشئ حسابًا لإرسال طلبات الرحلات.', au_phone:'رقم الهاتف',
   au_user:'اسم المستخدم', au_user_o:'اسم المستخدم (اختياري)', au_pass:'كلمة المرور', au_rem:'تذكرني', au_to_reg:'ليس لديك حساب؟ أنشئ حسابًا', au_to_login:'لديك حساب؟ سجّل الدخول',
   au_need:'يرجى تسجيل الدخول أو إنشاء حساب لإرسال طلب رحلة.',
-  au_e_phone:'أدخل رقم هاتف صحيحًا مع رمز الدولة، مثل 963 9xx xxx xxx+.', au_e_pass:'يجب ألا تقل كلمة المرور عن 8 أحرف.', au_e_user:'أدخل اسم مستخدم (من 3 إلى 30 حرفًا أو رقمًا أو . _ -).',
+  au_e_phone:'أدخل رقم هاتف صحيحًا.', au_e_pass:'يجب ألا تقل كلمة المرور عن 8 أحرف.', au_e_user:'أدخل اسم مستخدم (من 3 إلى 30 حرفًا أو رقمًا أو . _ -).',
   au_e_tu:'اسم المستخدم مستخدم مسبقًا.', au_e_tp:'يوجد حساب بهذا الرقم مسبقًا.', au_e_cred:'رقم الهاتف أو كلمة المرور غير صحيحة.', au_e_um:'اسم المستخدم لا يطابق هذا الحساب.',
   au_e_gen:'حدث خطأ ما. حاول مرة أخرى.', au_e_off:'الحسابات غير متاحة حاليًا.',
   q_left:'عدد الطلبات المتبقية اليوم', q_none:'لقد استخدمت جميع طلباتك لهذا اليوم. تتجدد عند الساعة 00:00 بتوقيت دمشق.', q_err:'تعذّر التحقق من حصتك اليومية. حاول مرة أخرى.',
@@ -389,13 +390,19 @@ const emailOf = p => p.slice(1) + '@' + AUTH_DOMAIN;
 const UN_RE = /^[\p{L}\p{N}._-]{3,30}$/u;
 let USER = null, QUOTA = null, MODE = 'login', UNAME = false;
 
-function normPhone(raw) {   // -> E.164 (+9639...) or null
+const CC = [['+963','Syria','سوريا'],['+90','Türkiye','تركيا'],['+966','Saudi Arabia','السعودية'],['+971','United Arab Emirates','الإمارات'],['+965','Kuwait','الكويت'],['+974','Qatar','قطر'],['+973','Bahrain','البحرين'],['+968','Oman','عُمان'],['+962','Jordan','الأردن'],['+961','Lebanon','لبنان'],['+964','Iraq','العراق'],['+20','Egypt','مصر'],['+967','Yemen','اليمن'],['+218','Libya','ليبيا'],['+216','Tunisia','تونس'],['+213','Algeria','الجزائر'],['+212','Morocco','المغرب'],['+249','Sudan','السودان'],['+98','Iran','إيران'],['+92','Pakistan','باكستان'],['+91','India','الهند'],['+49','Germany','ألمانيا'],['+31','Netherlands','هولندا'],['+32','Belgium','بلجيكا'],['+33','France','فرنسا'],['+43','Austria','النمسا'],['+41','Switzerland','سويسرا'],['+44','United Kingdom','المملكة المتحدة'],['+45','Denmark','الدنمارك'],['+46','Sweden','السويد'],['+30','Greece','اليونان'],['+357','Cyprus','قبرص'],['+7','Russia','روسيا'],['+1','USA / Canada','أمريكا / كندا']];
+function renderCC() {
+  const sel = $('acc'), cur = sel.value || (() => { try { return localStorage.getItem('orbit_cc'); } catch (e) { return null; } })() || '+963';
+  sel.innerHTML = CC.map(c => `<option value="${c[0]}">${esc(lang === 'ar' ? c[2] : c[1])} (${c[0]})</option>`).join(''); sel.value = cur;
+}
+function normPhone(raw, cc) {   // -> E.164 (+9639...) or null. A leading + or 00 overrides the selected country.
+  cc = cc || '+963';
   let s = String(raw || '').trim().replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[\s\-().]/g, '');
   if (s.startsWith('00')) s = '+' + s.slice(2);
-  else if (s.startsWith('+')) { /* already international */ }
-  else if (s.startsWith('0')) s = '+963' + s.slice(1);    // local Syrian format: 09xx...
-  else if (s.startsWith('963')) s = '+' + s;
-  else return null;
+  if (!s.startsWith('+')) {
+    if (cc === '+963' && s.startsWith('963')) s = '+' + s;
+    else s = cc + s.replace(/^0/, '');
+  }
   s = s.replace(/^\+9630/, '+963');
   return /^\+[1-9]\d{7,14}$/.test(s) ? s : null;
 }
@@ -437,7 +444,7 @@ $('asw').addEventListener('click', () => { MODE = MODE === 'reg' ? 'login' : 're
 $('auf').addEventListener('submit', async e => {
   e.preventDefault();
   if (!sb) return anote('au_e_off');
-  const reg = MODE === 'reg', phone = normPhone($('aph').value), pass = $('apw').value, un = $('aun').value.trim();
+  const reg = MODE === 'reg', phone = normPhone($('aph').value, $('acc').value), pass = $('apw').value, un = $('aun').value.trim();
   if (!phone) return anote('au_e_phone');
   if (reg && pass.length < 8) return anote('au_e_pass');
   if (!pass) return anote('au_e_cred');
@@ -458,8 +465,9 @@ $('auf').addEventListener('submit', async e => {
     closeAuth();
   } catch (err) { anote('au_e_gen', 'err', err && err.message); } finally { $('aub').disabled = false; }
 });
+$('acc').addEventListener('change', () => { try { localStorage.setItem('orbit_cc', $('acc').value); } catch (e) {} });
 document.addEventListener('langchange', () => {
-  render(); ui(); const n = $('anote'); if (n.dataset.k && n.classList.contains('show')) n.textContent = t(n.dataset.k) + (n.dataset.d ? ' [' + n.dataset.d + ']' : '');
+  renderCC(); render(); ui(); const n = $('anote'); if (n.dataset.k && n.classList.contains('show')) n.textContent = t(n.dataset.k) + (n.dataset.d ? ' [' + n.dataset.d + ']' : '');
 });
 if (sb) {
   sb.auth.getSession().then(({ data }) => { USER = data.session ? data.session.user : null; ui(); refreshQuota(); });
