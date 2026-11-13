@@ -399,7 +399,7 @@ function normPhone(raw) {   // -> E.164 (+9639...) or null
   s = s.replace(/^\+9630/, '+963');
   return /^\+[1-9]\d{7,14}$/.test(s) ? s : null;
 }
-const anote = (k, c) => { const n = $('anote'); n.className = 'note show ' + (c || 'err'); n.textContent = t(k); n.dataset.k = k; };
+const anote = (k, c, d) => { const n = $('anote'); n.className = 'note show ' + (c || 'err'); n.dataset.k = k; n.dataset.d = d || ''; n.textContent = t(k) + (d ? ' [' + d + ']' : ''); };
 function render() {
   const reg = MODE === 'reg';
   $('aut').textContent = t(reg ? 'au_reg' : 'au_login'); $('aub').textContent = t(reg ? 'au_reg' : 'au_login'); $('asw').textContent = t(reg ? 'au_to_login' : 'au_to_reg');
@@ -447,19 +447,19 @@ $('auf').addEventListener('submit', async e => {
     if (reg) {
       if (UNAME) { const { data } = await sb.rpc('username_available', { u: un }); if (data === false) return anote('au_e_tu'); }
       const { error } = await sb.auth.signUp({ email: emailOf(phone), password: pass, options: { data: { phone, username: UNAME ? un : null } } });
-      if (error) return anote(error.code === 'user_already_exists' || /already/i.test(error.message) ? 'au_e_tp' : 'au_e_gen');
+      if (error) return error.code === 'user_already_exists' || /already/i.test(error.message) ? anote('au_e_tp') : anote('au_e_gen', 'err', error.code || error.message);
     }
     const { data, error } = await sb.auth.signInWithPassword({ email: emailOf(phone), password: pass });
-    if (error || !data.session) return anote(error && error.status === 400 ? 'au_e_cred' : 'au_e_gen');
+    if (error || !data.session) return error && error.status === 400 && !/confirm/i.test(error.message) ? anote('au_e_cred') : anote('au_e_gen', 'err', error ? (error.code || error.message) : 'no session');
     if (!reg && UNAME && un) {
-      const { data: pr } = await sb.from('profiles').select('username').eq('id', data.session.user.id).maybeSingle();
+      const { data: pr } = await sb.from('customer_profiles').select('username').eq('id', data.session.user.id).maybeSingle();
       if (!pr || (pr.username || '').toLowerCase() !== un.toLowerCase()) { await sb.auth.signOut(); return anote('au_e_um'); }
     }
     closeAuth();
-  } catch (err) { anote('au_e_gen'); } finally { $('aub').disabled = false; }
+  } catch (err) { anote('au_e_gen', 'err', err && err.message); } finally { $('aub').disabled = false; }
 });
 document.addEventListener('langchange', () => {
-  render(); ui(); const n = $('anote'); if (n.dataset.k && n.classList.contains('show')) n.textContent = t(n.dataset.k);
+  render(); ui(); const n = $('anote'); if (n.dataset.k && n.classList.contains('show')) n.textContent = t(n.dataset.k) + (n.dataset.d ? ' [' + n.dataset.d + ']' : '');
 });
 if (sb) {
   sb.auth.getSession().then(({ data }) => { USER = data.session ? data.session.user : null; ui(); refreshQuota(); });
